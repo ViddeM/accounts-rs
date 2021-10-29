@@ -1,12 +1,33 @@
-version: 3
+version: "3"
 services:
   backend:
     build:
       context: backend
       dockerfile: dev.Dockerfile
+    environment:
+      DATABASE_URL: postgres://accounts_rs:password@db/accounts_rs
+      ROCKET_ADDRESS: 0.0.0.0
+      ROCKET_PORT: 8000
+    ports:
+      - ${BACKEND_PORT}:8000
+    volumes:
+      - ./backend:/app
+      - /app/target
+
+  frontend:
+    build:
+      context: frontend
+      dockerfile: dev.Dockerfile
+    environment:
+      BACKEND_ADDRESS: http://backend:8000
+    ports:
+      - ${FRONTEND_PORT}:3000
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
 
   db:
-    image: postgres: 13.2
+    image: postgres:13.2
     environment:
       POSTGRES_DB: ${PG_DATABASE}
       POSTGRES_USER: ${PG_USERNAME}

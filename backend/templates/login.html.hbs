@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Login</title>
+        <link rel="stylesheet" type="text/css" href="/api/public/styles.css" media="screen" />
+    </head>
+    <body>
+        <div class="login-wrapper">
+            <form class="card form" id="login-form" method="POST" action="/api/login">
+                <h3>
+                    Login to AccountsRS!
+                </h3>
+                <div class="form-row">
+                    <label for="email">Email: </label>
+                    <input type="email" form="login-form" id="email" maxlength="60" placeholder="email"
+                           required="required" autocapitalize="none" autocorrect="off" autocomplete="username"
+                           name="email">
+                </div>
+                <div class="form-row">
+                    <label for="password">Password: </label>
+                    <input type="password" form="login-form" id="password" maxlength="64" minlength="10"
+                           placeholder="password" required="required" name="password"
+                           autocomplete="current-password"/>
+                </div>
+                {{#if error}}
+                    <p class="error-message">{{error}}</p>
+                {{/if}}
+                <input type="submit" form="login-form" id="submit" value="Login"/>
+            </form>
+        </div>
+    </body>
+</html>

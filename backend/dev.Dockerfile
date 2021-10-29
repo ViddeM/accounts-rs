@@ -2,9 +2,9 @@ FROM rust
 
 WORKDIR /app
 
-RUN cargo install cargo-watch
+RUN cargo install sqlx-cli cargo-watch
 
 ENV PORT=8080
 EXPOSE 8080
 
-CMD cargo watch -x run
+CMD cargo sqlx migrate run && cargo watch -x run
