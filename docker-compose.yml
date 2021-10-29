@@ -1,0 +1,20 @@
+version: 3
+services:
+  backend:
+    build:
+      context: backend
+      dockerfile: dev.Dockerfile
+
+  db:
+    image: postgres: 13.2
+    environment:
+      POSTGRES_DB: ${PG_DATABASE}
+      POSTGRES_USER: ${PG_USERNAME}
+      POSTGRES_PASSWORD: ${PG_PASSWORD}
+    ports:
+      - ${PG_LOCAL_PORT}:5432
+
+  adminer:
+    image: adminer
+    ports:
+      - ${ADMINER_PORT}:8080
