@@ -20,7 +20,7 @@ pub type AccountsResult<T> = Result<T, AccountsError>;
 const SOMETHING_WENT_WRONG: &str = "Oops something went wrong";
 
 impl<'r> Responder<'r, 'r> for AccountsError {
-    fn respond_to(self, request: &Request) -> rocket::response::Result<'r> {
+    fn respond_to(self, _request: &Request) -> rocket::response::Result<'r> {
         println!("Something went wrong: {:?}", self);
 
         Response::build()

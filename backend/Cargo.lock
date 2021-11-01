@@ -7,8 +7,12 @@ name = "accounts_rs"
 version = "0.1.0"
 dependencies = [
  "dotenv",
+ "log",
  "rocket",
  "rocket_dyn_templates",
+ "serde",
+ "serde_json",
+ "sha2",
  "sqlx",
  "thiserror",
  "uuid",
@@ -1794,6 +1798,7 @@ dependencies = [
  "rocket_codegen",
  "rocket_http",
  "serde",
+ "serde_json",
  "state",
  "tempfile",
  "time",
