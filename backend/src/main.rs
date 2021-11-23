@@ -1,14 +1,12 @@
 #![feature(try_trait_v2)]
-
-pub mod accounts_error;
 mod api;
-pub mod config;
 mod db;
 pub mod models;
-pub mod response;
+pub mod services;
+pub mod util;
 
-use crate::config::Config;
 use crate::db::account::AccountRepository;
+use crate::util::config::Config;
 use rocket::fs::FileServer;
 use rocket_dyn_templates::Template;
 use sqlx::postgres::PgPoolOptions;
@@ -32,7 +30,8 @@ async fn main() {
             routes![
                 api::index::index,
                 api::login::get_login_page,
-                api::login::post_login
+                api::login::post_login,
+                api::create_account::create_account,
             ],
         )
         .manage(AccountRepository::new(pool))

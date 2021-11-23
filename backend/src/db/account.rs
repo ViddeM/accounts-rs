@@ -1,5 +1,5 @@
-use crate::accounts_error::AccountsResult;
 use crate::models::account::Account;
+use crate::util::accounts_error::AccountsResult;
 use sqlx::PgPool;
 
 #[derive(Clone, Debug)]
@@ -35,14 +35,14 @@ AND password = $2
     pub async fn get_by_email(&self, email: &String) -> AccountsResult<Option<Account>> {
         Ok(sqlx::query_as!(
             Account,
-            "\
+            "
 SELECT * 
 FROM account
 WHERE email = $1
         ",
             email
         )
-        .fetch_one(&self.pool)
+        .fetch_optional(&self.pool)
         .await?)
     }
 }

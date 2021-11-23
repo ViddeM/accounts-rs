@@ -1,6 +1,7 @@
-use crate::config::Config;
 use crate::db::account::AccountRepository;
-use crate::response::ResponseStatus;
+use crate::util::config::Config;
+use crate::util::response::{ErrMsg, ResponseStatus};
+use rocket::http::Status;
 use rocket::serde::json::Json;
 use rocket::State;
 use serde::{Deserialize, Serialize};
@@ -19,7 +20,17 @@ pub async fn create_account(
     account_repository: &State<AccountRepository>,
     create_account: Json<CreateAccountRequest>,
 ) -> ResponseStatus<()> {
-    let existing_with_email = account_repository
-        .get_by_email(&create_account.email)
-        .await?;
+    let existing_with_email = match account_repository.get_by_email(&create_account.email).await {
+        Ok(val) => val,
+        Err(err) => {
+            error!("DB err: {:?}", err);
+            return ResponseStatus::internal_err();
+        }
+    };
+
+    if existing_with_email.is_none() {
+        return ResponseStatus::err(Status::Ok, ErrMsg::EmailAlreadyRegistered);
+    }
+
+    ResponseStatus::ok(())
 }
