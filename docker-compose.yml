@@ -1,18 +1,19 @@
 version: "3"
 services:
-  backend:
-    build:
-      context: backend
-      dockerfile: dev.Dockerfile
-    environment:
-      DATABASE_URL: postgres://accounts_rs:password@db/accounts_rs
-      ROCKET_ADDRESS: 0.0.0.0
-      ROCKET_PORT: 8000
-    ports:
-      - ${BACKEND_PORT}:8000
-    volumes:
-      - ./backend:/app
-      - /app/target
+  # backend:
+  #   build:
+  #     context: backend
+  #     dockerfile: dev.Dockerfile
+  #   environment:
+  #     DATABASE_URL: postgres://${PG_USERNAME}:${PG_PASSWORD}@db/${PG_DATABASE}
+  #     PEPPER: ${PEPPER}
+  #     ROCKET_ADDRESS: 0.0.0.0
+  #     ROCKET_PORT: 8000
+  #   ports:
+  #     - ${BACKEND_PORT}:8000
+  #   volumes:
+  #     - ./backend:/app
+  #     - /app/target
 
   frontend:
     build:
