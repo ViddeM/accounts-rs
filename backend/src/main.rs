@@ -1,19 +1,24 @@
 #![feature(try_trait_v2)]
+#[macro_use]
+extern crate rocket;
+
+use rocket::fs::FileServer;
+use rocket_dyn_templates::Template;
+use sqlx::postgres::PgPoolOptions;
+
+use crate::db::account::AccountRepository;
+use crate::db::login_details::LoginDetailsRepository;
+use crate::db::login_provider::LoginProviderRepository;
+use crate::db::third_party_login::ThirdPartyLoginRepository;
+use crate::db::whitelist::WhitelistRepository;
+use crate::services::password_service::{hash_and_encrypt_password, verify_password};
+use crate::util::config::Config;
+
 mod api;
 mod db;
 pub mod models;
 pub mod services;
 pub mod util;
-
-use crate::db::account::AccountRepository;
-use crate::services::password_service::{hash_and_encrypt_password, verify_password};
-use crate::util::config::Config;
-use rocket::fs::FileServer;
-use rocket_dyn_templates::Template;
-use sqlx::postgres::PgPoolOptions;
-
-#[macro_use]
-extern crate rocket;
 
 #[rocket::main]
 async fn main() {
@@ -36,10 +41,14 @@ async fn main() {
                 api::create_account::get_create_account,
             ],
         )
-        .manage(AccountRepository::new(pool))
+        .mount("/api/public", FileServer::from("static/public"))
+        .manage(AccountRepository::new(pool.clone()))
+        .manage(LoginDetailsRepository::new(pool.clone()))
+        .manage(LoginProviderRepository::new(pool.clone()))
+        .manage(ThirdPartyLoginRepository::new(pool.clone()))
+        .manage(WhitelistRepository::new(pool.clone()))
         .manage(config)
         .attach(Template::fairing())
-        .mount("/api/public", FileServer::from("static/public"))
         .launch()
         .await
         .expect("Rocket failed to start");

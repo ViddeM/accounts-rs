@@ -60,7 +60,7 @@ impl Config {
     }
 }
 
-fn load_env_str(key: String) -> ConfigResult<String> {
+    fn load_env_str(key: String) -> ConfigResult<String> {
     let var = env::var(&key)?;
 
     if var.is_empty() {

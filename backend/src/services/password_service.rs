@@ -7,6 +7,38 @@ use argon2::{PasswordHash, PasswordHasher, PasswordVerifier};
 use std::num::ParseIntError;
 use std::str::Utf8Error;
 
+#[derive(Debug)]
+pub enum PasswordErr {
+    Argon2Error(argon2::Error),
+    PasswordHashError(argon2::password_hash::Error),
+    Utf8Error(Utf8Error),
+    AesGcmError(aes_gcm::Error),
+}
+
+impl From<argon2::Error> for PasswordErr {
+    fn from(err: argon2::Error) -> Self {
+        PasswordErr::Argon2Error(err)
+    }
+}
+
+impl From<argon2::password_hash::Error> for PasswordErr {
+    fn from(err: argon2::password_hash::Error) -> Self {
+        PasswordErr::PasswordHashError(err)
+    }
+}
+
+impl From<Utf8Error> for PasswordErr {
+    fn from(err: Utf8Error) -> Self {
+        PasswordErr::Utf8Error(err)
+    }
+}
+
+impl From<aes_gcm::Error> for PasswordErr {
+    fn from(err: Error) -> Self {
+        PasswordErr::AesGcmError(err)
+    }
+}
+
 type PasswordResult<T> = Result<T, PasswordErr>;
 
 pub fn hash_and_encrypt_password(
@@ -107,36 +139,4 @@ fn from_hex(hex_str: String) -> Result<Vec<u8>, ParseIntError> {
         .step_by(2)
         .map(|i| u8::from_str_radix(&hex_str[i..i + 2], 16))
         .collect()
-}
-
-#[derive(Debug)]
-pub enum PasswordErr {
-    Argon2Error(argon2::Error),
-    PasswordHashError(argon2::password_hash::Error),
-    Utf8Error(Utf8Error),
-    AesGcmError(aes_gcm::Error),
-}
-
-impl From<argon2::Error> for PasswordErr {
-    fn from(err: argon2::Error) -> Self {
-        PasswordErr::Argon2Error(err)
-    }
-}
-
-impl From<argon2::password_hash::Error> for PasswordErr {
-    fn from(err: argon2::password_hash::Error) -> Self {
-        PasswordErr::PasswordHashError(err)
-    }
-}
-
-impl From<Utf8Error> for PasswordErr {
-    fn from(err: Utf8Error) -> Self {
-        PasswordErr::Utf8Error(err)
-    }
-}
-
-impl From<aes_gcm::Error> for PasswordErr {
-    fn from(err: Error) -> Self {
-        PasswordErr::AesGcmError(err)
-    }
 }

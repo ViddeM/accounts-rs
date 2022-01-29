@@ -1,4 +1,5 @@
 use crate::db::account::AccountRepository;
+use crate::db::login_details::LoginDetailsRepository;
 use rocket::form::Form;
 use rocket::response::content::Html;
 use rocket::response::Redirect;
@@ -20,16 +21,15 @@ pub async fn get_login_page() -> Html<Template> {
 
 #[post("/login", data = "<user_input>")]
 pub async fn post_login(
-    account_repository: &State<AccountRepository>,
+    login_details_repository: &State<LoginDetailsRepository>,
     user_input: Form<LoginForm>,
 ) -> Either<Html<Template>, Redirect> {
     let mut data = BTreeMap::new();
 
-    let account_res = account_repository
+    let login_details = match login_details_repository
         .get_by_email_and_password(&user_input.email, &user_input.password)
-        .await;
-
-    let account = match account_res {
+        .await
+    {
         Err(err) => {
             println!("Failed communcating with DB: {:?}", err);
             data.insert("error", "Something went wrong");
@@ -38,7 +38,7 @@ pub async fn post_login(
         Ok(val) => val,
     };
 
-    match account {
+    match login_details {
         Some(_) => Either::Right(Redirect::to("/")),
         None => {
             data.insert("error", "Invalid email/password");
