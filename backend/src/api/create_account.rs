@@ -6,7 +6,7 @@ use rocket::form::Form;
 use rocket::http::Status;
 use rocket::response::content::Html;
 use rocket::serde::json::Json;
-use rocket::State;
+use rocket::{Either, State};
 use rocket_dyn_templates::Template;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
@@ -31,7 +31,13 @@ pub async fn create_account(
     config: &State<Config>,
     login_details_repository: &State<LoginDetailsRepository>,
     create_account: Form<CreateAccountForm>,
-) -> ResponseStatus<()> {
+) -> Either<Html<Template>, ResponseStatus<()>> {
+    if create_account.password != create_account.password_repeat {
+        let mut data = BTreeMap::new();
+        data.insert("error", "Passwords does not match");
+        return Either::Left(Html(Template::render("create-account", &data)));
+    }
+
     let existing_with_email = match login_details_repository
         .get_by_email(&create_account.email)
         .await
@@ -39,13 +45,16 @@ pub async fn create_account(
         Ok(val) => val,
         Err(err) => {
             error!("DB err: {:?}", err);
-            return ResponseStatus::internal_err();
+            return Either::Right(ResponseStatus::internal_err());
         }
     };
 
     if !existing_with_email.is_none() {
-        return ResponseStatus::err(Status::Ok, ErrMsg::EmailAlreadyRegistered);
+        return Either::Right(ResponseStatus::err(
+            Status::Ok,
+            ErrMsg::EmailAlreadyRegistered,
+        ));
     }
 
-    ResponseStatus::ok(())
+    Either::Right(ResponseStatus::ok(()))
 }
