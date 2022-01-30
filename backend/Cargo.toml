@@ -16,6 +16,6 @@ sqlx = { version = "0.4", features = ["runtime-async-std-rustls", "postgres", "m
 thiserror = "1.0"
 uuid = { version = "0.8" }
 log = "0.4.14"
-argon2 = "0.3.1"
-aead = "0.4.3"
-aes = "0.7.5"
+argon2 = "0.3.2"
+rand = "0.8.4"
+aes-gcm = "0.9.4"

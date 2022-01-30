@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Create Account</title>
+        <link rel="stylesheet" type="text/css" href="/api/public/styles.css" media="screen" />
+    </head>
+    <body>
+        <div class="login-wrapper">
+            <form class="card form" id="create-account-form" method="POST" action="/api/create_account">
+                <h3>
+                    Create an AccountsRS account!
+                </h3>
+                <div class="form-row">
+                    <label for="first-name">First Name: </label>
+                    <input type="text" form="create-account-form" id="first-name" maxlength="60" placeholder="first name"
+                           required="required" autocapitalize="none" autocomplete="given-name"
+                           name="first_name">
+                </div>
+                <div class="form-row">
+                    <label for="last-name">Last Name: </label>
+                    <input type="text" form="create-account-form" id="last-name" maxlength="60" placeholder="last name"
+                           required="required" autocapitalize="none" autocomplete="family-name"
+                           name="last_name">
+                </div>
+                <div class="form-row">
+                    <label for="email">Email: </label>
+                    <input type="email" form="create-account-form" id="email" maxlength="60" placeholder="email"
+                           required="required" autocapitalize="none" autocomplete="email"
+                           name="email">
+                </div>
+                <div class="form-row">
+                    <label for="password">Password: </label>
+                    <input type="password" form="create-account-form" id="password" maxlength="128" minlength="8"
+                           placeholder="password" required="required" name="password"
+                           autocomplete="new-password"/>
+                </div>
+                <div class="form-row">
+                    <label for="repeat-password">Repeat Password: </label>
+                    <input type="password" form="create-account-form" id="repeat-password" maxlength="128" minlength="8"
+                           placeholder="repeat password" required="required" name="password_repeat"
+                           autocomplete="new-password"/>
+                </div>
+                {{#if error}}
+                    <p class="error-message">{{error}}</p>
+                {{/if}}
+                <input type="submit" form="create-account-form" id="submit" value="Create Account"/>
+            </form>
+        </div>
+    </body>
+</html>

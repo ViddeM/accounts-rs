@@ -14,8 +14,7 @@ pub struct LoginForm {
 
 #[get("/login")]
 pub async fn get_login_page() -> Html<Template> {
-    let mut data = BTreeMap::new();
-    data.insert("asd", "asd");
+    let mut data: BTreeMap<&str, &str> = BTreeMap::new();
     Html(Template::render("login", &data))
 }
 

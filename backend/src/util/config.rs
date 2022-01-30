@@ -1,5 +1,5 @@
-use aead::generic_array::GenericArray;
-use aes::{Aes256, NewBlockCipher};
+use aes_gcm::NewAead;
+use aes_gcm::{Aes256Gcm, Key};
 use argon2::{Algorithm, Argon2, Params, Version};
 use dotenv;
 use std::env;
@@ -20,10 +20,12 @@ pub type ConfigResult<T> = Result<T, ConfigError>;
 const MINIMUM_MEMORY_SIZE: u32 = 38798;
 const MINIMUM_ITERATIONS: u32 = 1;
 const DEGREE_OF_PARALLELISM: u32 = 1;
+const REQUIRED_PEPPER_BYTES: usize = 32;
 
+#[derive(Clone)]
 pub struct Config {
     pub database_url: String,
-    pub pepper_cipher: Aes256,
+    pub pepper_cipher: Aes256Gcm,
     pub argon2: Argon2<'static>,
 }
 
@@ -44,8 +46,11 @@ impl Config {
         );
 
         let pepper = load_env_str("PEPPER".to_string())?;
-        let pepper_key = GenericArray::from_slice(pepper.as_bytes());
-        let pepper_cipher = Aes256::new(&pepper_key);
+        if pepper.len() != REQUIRED_PEPPER_BYTES {
+            panic!("Pepper must be exactly {} bytes", REQUIRED_PEPPER_BYTES);
+        }
+        let pepper_key = Key::from_slice(pepper.as_bytes());
+        let pepper_cipher = Aes256Gcm::new(pepper_key);
 
         Ok(Config {
             database_url: load_env_str("DATABASE_URL".to_string())?.to_string(),

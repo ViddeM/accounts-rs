@@ -6,6 +6,7 @@ pub mod services;
 pub mod util;
 
 use crate::db::account::AccountRepository;
+use crate::services::password_service::{hash_and_encrypt_password, verify_password};
 use crate::util::config::Config;
 use rocket::fs::FileServer;
 use rocket_dyn_templates::Template;
@@ -32,6 +33,7 @@ async fn main() {
                 api::login::get_login_page,
                 api::login::post_login,
                 api::create_account::create_account,
+                api::create_account::get_create_account,
             ],
         )
         .manage(AccountRepository::new(pool))
