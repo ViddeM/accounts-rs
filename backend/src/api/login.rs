@@ -1,4 +1,3 @@
-use crate::db::account::AccountRepository;
 use crate::db::login_details::LoginDetailsRepository;
 use rocket::form::Form;
 use rocket::response::content::Html;
@@ -6,6 +5,8 @@ use rocket::response::Redirect;
 use rocket::{Either, State};
 use rocket_dyn_templates::Template;
 use std::collections::BTreeMap;
+
+const ERR_INVALID_PASSWORD: &str = "Invalid password";
 
 #[derive(FromForm)]
 pub struct LoginForm {
@@ -15,7 +16,7 @@ pub struct LoginForm {
 
 #[get("/login")]
 pub async fn get_login_page() -> Html<Template> {
-    let mut data: BTreeMap<&str, &str> = BTreeMap::new();
+    let data: BTreeMap<&str, &str> = BTreeMap::new();
     Html(Template::render("login", &data))
 }
 
@@ -41,7 +42,7 @@ pub async fn post_login(
     match login_details {
         Some(_) => Either::Right(Redirect::to("/")),
         None => {
-            data.insert("error", "Invalid email/password");
+            data.insert("error", "Invalid password");
             Either::Left(Html(Template::render("login", data)))
         }
     }

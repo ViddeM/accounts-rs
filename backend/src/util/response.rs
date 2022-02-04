@@ -21,7 +21,7 @@ impl<T: Serialize + Clone> ResponseStatus<T> {
 
     pub fn err(status: Status, msg: ErrMsg) -> ResponseStatus<T> {
         ResponseStatus {
-            status: status,
+            status,
             response_data: ResponseData::Failure(msg),
         }
     }

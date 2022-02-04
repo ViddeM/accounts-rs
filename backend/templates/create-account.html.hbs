@@ -14,29 +14,29 @@
                     <label for="first-name">First Name: </label>
                     <input type="text" form="create-account-form" id="first-name" maxlength="60" placeholder="first name"
                            required="required" autocapitalize="none" autocomplete="given-name"
-                           name="first_name">
+                           name="first_name" value={{first_name}}>
                 </div>
                 <div class="form-row">
                     <label for="last-name">Last Name: </label>
                     <input type="text" form="create-account-form" id="last-name" maxlength="60" placeholder="last name"
                            required="required" autocapitalize="none" autocomplete="family-name"
-                           name="last_name">
+                           name="last_name" value={{last_name}}>
                 </div>
                 <div class="form-row">
                     <label for="email">Email: </label>
                     <input type="email" form="create-account-form" id="email" maxlength="60" placeholder="email"
                            required="required" autocapitalize="none" autocomplete="email"
-                           name="email">
+                           name="email" value={{email}}>
                 </div>
                 <div class="form-row">
                     <label for="password">Password: </label>
-                    <input type="password" form="create-account-form" id="password" maxlength="128" minlength="8"
+                    <input type="password" form="create-account-form" id="password" maxlength={{max_password_len}} minlength={{min_password_len}}
                            placeholder="password" required="required" name="password"
                            autocomplete="new-password"/>
                 </div>
                 <div class="form-row">
                     <label for="repeat-password">Repeat Password: </label>
-                    <input type="password" form="create-account-form" id="repeat-password" maxlength="128" minlength="8"
+                    <input type="password" form="create-account-form" id="repeat-password" maxlength={{max_password_len}} minlength={{min_password_len}}
                            placeholder="repeat password" required="required" name="password_repeat"
                            autocomplete="new-password"/>
                 </div>

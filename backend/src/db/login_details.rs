@@ -14,8 +14,8 @@ impl LoginDetailsRepository {
 
     pub async fn get_by_email_and_password(
         &self,
-        email: &String,
-        password: &String,
+        email: &str,
+        password: &str,
     ) -> AccountsResult<Option<LoginDetails>> {
         Ok(sqlx::query_as!(
             LoginDetails,
@@ -32,7 +32,7 @@ AND password = $2
         .await?)
     }
 
-    pub async fn get_by_email(&self, email: &String) -> AccountsResult<Option<LoginDetails>> {
+    pub async fn get_by_email(&self, email: &str) -> AccountsResult<Option<LoginDetails>> {
         Ok(sqlx::query_as!(
             LoginDetails,
             "

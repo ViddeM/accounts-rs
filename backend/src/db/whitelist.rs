@@ -1,5 +1,5 @@
-use crate::models::whitelist::Whitelist;
-use crate::util::accounts_error::AccountsError;
+
+
 use sqlx::PgPool;
 
 #[derive(Clone, Debug)]

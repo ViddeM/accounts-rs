@@ -2,8 +2,8 @@ use sqlx::database::HasValueRef;
 use sqlx::decode::Decode;
 use sqlx::error::BoxDynError;
 use sqlx::types::chrono::{DateTime, Utc};
-use sqlx::{Database, Postgres};
-use uuid::Uuid;
+use sqlx::{Database};
+
 
 #[derive(Debug, Clone, sqlx::FromRow)]
 pub struct Whitelist {

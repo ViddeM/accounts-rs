@@ -53,14 +53,14 @@ impl Config {
         let pepper_cipher = Aes256Gcm::new(pepper_key);
 
         Ok(Config {
-            database_url: load_env_str("DATABASE_URL".to_string())?.to_string(),
+            database_url: load_env_str("DATABASE_URL".to_string())?,
             pepper_cipher,
             argon2,
         })
     }
 }
 
-    fn load_env_str(key: String) -> ConfigResult<String> {
+fn load_env_str(key: String) -> ConfigResult<String> {
     let var = env::var(&key)?;
 
     if var.is_empty() {

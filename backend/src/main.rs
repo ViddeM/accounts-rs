@@ -11,7 +11,7 @@ use crate::db::login_details::LoginDetailsRepository;
 use crate::db::login_provider::LoginProviderRepository;
 use crate::db::third_party_login::ThirdPartyLoginRepository;
 use crate::db::whitelist::WhitelistRepository;
-use crate::services::password_service::{hash_and_encrypt_password, verify_password};
+
 use crate::util::config::Config;
 
 mod api;
