@@ -6,7 +6,12 @@ use rocket::{Either, State};
 use rocket_dyn_templates::Template;
 use std::collections::BTreeMap;
 
+const LOGIN_TEMPLATE_NAME: &str = "login";
+
+const ERROR_KEY: &str = "error";
+
 const ERR_INVALID_PASSWORD: &str = "Invalid password";
+const ERR_SOMETHING_WENT_WRONG: &str = "Something went wrong";
 
 #[derive(FromForm)]
 pub struct LoginForm {
@@ -33,8 +38,8 @@ pub async fn post_login(
     {
         Err(err) => {
             println!("Failed communcating with DB: {:?}", err);
-            data.insert("error", "Something went wrong");
-            return Either::Left(Html(Template::render("login", data)));
+            data.insert(ERROR_KEY, ERR_SOMETHING_WENT_WRONG);
+            return Either::Left(Html(Template::render(LOGIN_TEMPLATE_NAME, data)));
         }
         Ok(val) => val,
     };
@@ -42,8 +47,8 @@ pub async fn post_login(
     match login_details {
         Some(_) => Either::Right(Redirect::to("/")),
         None => {
-            data.insert("error", "Invalid password");
-            Either::Left(Html(Template::render("login", data)))
+            data.insert(ERROR_KEY, ERR_INVALID_PASSWORD);
+            Either::Left(Html(Template::render(LOGIN_TEMPLATE_NAME, data)))
         }
     }
 }
