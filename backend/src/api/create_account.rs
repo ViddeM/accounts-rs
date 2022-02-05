@@ -31,12 +31,12 @@ const LOGIN_PAGE_URL: &str = "/api/login";
 const MIN_PASSWORD_LENGTH: usize = 8;
 const MAX_PASSWORD_LENGTH: usize = 128;
 
-fn get_default_create_account_data() -> BTreeMap<&'static str, &'static str> {
-    let mut data: BTreeMap<&str, &str> = BTreeMap::new();
+fn get_default_create_account_data() -> BTreeMap<&'static str, String> {
+    let mut data: BTreeMap<&str, String> = BTreeMap::new();
     let min_password_length = MIN_PASSWORD_LENGTH.to_string();
     let max_password_length = MAX_PASSWORD_LENGTH.to_string();
-    data.insert(MIN_PASSWORD_LEN_KEY, min_password_length.as_str().clone());
-    data.insert(MAX_PASSWORD_LEN_KEY, max_password_length.as_str().clone());
+    data.insert(MIN_PASSWORD_LEN_KEY, min_password_length.to_string());
+    data.insert(MAX_PASSWORD_LEN_KEY, max_password_length.to_string());
     data
 }
 
@@ -63,22 +63,22 @@ pub async fn create_account(
 ) -> Either<Html<Template>, Redirect> {
     let mut data = get_default_create_account_data();
 
-    data.insert(FIRST_NAME_KEY, &create_account.first_name);
-    data.insert(LAST_NAME_KEY, &create_account.last_name);
-    data.insert(EMAIL_KEY, &create_account.email);
+    data.insert(FIRST_NAME_KEY, create_account.first_name.to_string());
+    data.insert(LAST_NAME_KEY, create_account.last_name.to_string());
+    data.insert(EMAIL_KEY, create_account.email.to_string());
 
     if create_account.password != create_account.password_repeat {
-        data.insert(ERROR_KEY, ERR_PASSWORDS_NOT_MATCH);
+        data.insert(ERROR_KEY, ERR_PASSWORDS_NOT_MATCH.to_string());
         return Either::Left(Html(Template::render(CREATE_ACCOUNT_TEMPLATE_NAME, &data)));
     }
 
     if create_account.password.len() < MIN_PASSWORD_LENGTH {
-        data.insert(ERROR_KEY, ERR_PASSWORD_TOO_SHORT);
+        data.insert(ERROR_KEY, ERR_PASSWORD_TOO_SHORT.to_string());
         return Either::Left(Html(Template::render(CREATE_ACCOUNT_TEMPLATE_NAME, &data)));
     }
 
     if create_account.password.len() > MAX_PASSWORD_LENGTH {
-        data.insert(ERROR_KEY, ERR_PASSWORD_TOO_LONG);
+        data.insert(ERROR_KEY, ERR_PASSWORD_TOO_LONG.to_string());
         return Either::Left(Html(Template::render(CREATE_ACCOUNT_TEMPLATE_NAME, &data)));
     }
 
@@ -89,13 +89,13 @@ pub async fn create_account(
         Ok(val) => val,
         Err(err) => {
             error!("DB err: {:?}", err);
-            data.insert(ERROR_KEY, ERR_UNKNOWN);
+            data.insert(ERROR_KEY, ERR_UNKNOWN.to_string());
             return Either::Left(Html(Template::render("create-account", data)));
         }
     };
 
     if existing_with_email.is_some() {
-        data.insert(ERROR_KEY, ERR_EMAIL_IN_USE);
+        data.insert(ERROR_KEY, ERR_EMAIL_IN_USE.to_string());
         return Either::Left(Html(Template::render(CREATE_ACCOUNT_TEMPLATE_NAME, data)));
     }
 

@@ -13,6 +13,8 @@ const ERROR_KEY: &str = "error";
 const ERR_INVALID_PASSWORD: &str = "Invalid password";
 const ERR_SOMETHING_WENT_WRONG: &str = "Something went wrong";
 
+const LOGIN_SUCCESSFUL_ADDRESS: &str = "/";
+
 #[derive(FromForm)]
 pub struct LoginForm {
     email: String,
@@ -45,7 +47,7 @@ pub async fn post_login(
     };
 
     match login_details {
-        Some(_) => Either::Right(Redirect::to("/")),
+        Some(_) => Either::Right(Redirect::to(LOGIN_SUCCESSFUL_ADDRESS)),
         None => {
             data.insert(ERROR_KEY, ERR_INVALID_PASSWORD);
             Either::Left(Html(Template::render(LOGIN_TEMPLATE_NAME, data)))
