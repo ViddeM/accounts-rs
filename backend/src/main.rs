@@ -42,6 +42,7 @@ async fn main() {
             ],
         )
         .mount("/api/public", FileServer::from("static/public"))
+        .manage(pool.clone())
         .manage(AccountRepository::new(pool.clone()))
         .manage(LoginDetailsRepository::new(pool.clone()))
         .manage(LoginProviderRepository::new(pool.clone()))

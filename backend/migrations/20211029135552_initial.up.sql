@@ -14,6 +14,7 @@ CREATE TABLE login_details (
     account_id UUID PRIMARY KEY REFERENCES account(id),
     email TEXT UNIQUE NOT NULL,
     password TEXT NOT NULL,
+    password_nonces TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     modified_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );

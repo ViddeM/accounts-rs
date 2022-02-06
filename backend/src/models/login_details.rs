@@ -6,6 +6,7 @@ pub struct LoginDetails {
     pub account_id: Uuid,
     pub email: String,
     pub password: String,
+    pub password_nonces: String,
     pub created_at: DateTime<Utc>,
     pub modified_at: DateTime<Utc>,
 }
