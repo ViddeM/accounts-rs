@@ -1,5 +1,4 @@
-use crate::db::login_details::LoginDetailsRepository;
-use crate::services::password_service;
+use crate::services::create_account_service;
 use crate::util::config::Config;
 use rocket::form::Form;
 use rocket::response::content::Html;
@@ -7,8 +6,8 @@ use rocket::response::content::Html;
 use rocket::{Either, State};
 use rocket_dyn_templates::Template;
 
-use crate::db::account::AccountRepository;
 use crate::db::DB;
+use crate::services::create_account_service::CreateAccountError;
 use rocket::response::Redirect;
 use sqlx::Pool;
 use std::collections::BTreeMap;
@@ -66,8 +65,6 @@ pub struct CreateAccountForm {
 pub async fn create_account(
     config: &State<Config>,
     db_pool: &State<Pool<DB>>,
-    login_details_repository: &State<LoginDetailsRepository>,
-    account_repository: &State<AccountRepository>,
     create_account: Form<CreateAccountForm>,
 ) -> Either<Html<Template>, Redirect> {
     let mut data = get_default_create_account_data();
@@ -88,70 +85,27 @@ pub async fn create_account(
         return Either::Left(create_account_error(&mut data, ERR_PASSWORD_TOO_LONG));
     }
 
-    let transaction = match db_pool.begin().await {
-        Ok(transaction) => transaction,
-        Err(err) => {
-            error!("Failed to create transaction: {:?}", err);
-            return Either::Left(create_account_error(&mut data, ERR_INTERNAL));
-        }
-    };
-
-    let existing_with_email = match login_details_repository
-        .get_by_email(&create_account.email, &transaction)
-        .await
+    if let Err(e) = create_account_service::create_account(
+        config,
+        db_pool,
+        &create_account.first_name,
+        &create_account.last_name,
+        &create_account.email,
+        &create_account.password,
+    )
+    .await
     {
-        Ok(val) => val,
-        Err(err) => {
-            error!("DB err: {:?}", err);
-            return Either::Left(create_account_error(&mut data, ERR_INTERNAL));
-        }
+        return Either::Left(create_account_error(&mut data, e.to_api_err()));
     };
-
-    if existing_with_email.is_some() {
-        return Either::Left(create_account_error(&mut data, ERR_EMAIL_IN_USE));
-    }
-
-    // TODO: Check whitelist
-    let account = match account_repository
-        .insert(
-            &create_account.first_name,
-            &create_account.last_name,
-            &transaction,
-        )
-        .await
-    {
-        Ok(acc) => acc,
-        Err(err) => {
-            error!("Failed to create account {:?}", err);
-            transaction.rollback();
-            return Either::Left(create_account_error(&mut data, ERR_INTERNAL));
-        }
-    };
-
-    let (password, nonces) =
-        match password_service::hash_and_encrypt_password(&create_account.password, &config) {
-            Ok(pass) => pass,
-            Err(err) => {
-                error!("Failed to hash and encrypt password: {:?}", err);
-                return Either::Left(create_account_error(&mut data, ERR_INTERNAL));
-            }
-        };
-
-    if let Err(err) = login_details_repository
-        .insert(
-            &account,
-            &create_account.email,
-            &password,
-            &nonces,
-            &transaction,
-        )
-        .await
-    {
-        error!("Failed to create login details, err: {:?}", err);
-        return Either::Left(create_account_error(&mut data, ERR_INTERNAL));
-    }
-
-    transaction.commit();
 
     Either::Right(Redirect::to(LOGIN_PAGE_URL))
+}
+
+impl CreateAccountError {
+    fn to_api_err<'a>(self) -> &'a str {
+        match self {
+            CreateAccountError::Internal => ERR_INTERNAL,
+            CreateAccountError::EmailInUse => ERR_EMAIL_IN_USE,
+        }
+    }
 }

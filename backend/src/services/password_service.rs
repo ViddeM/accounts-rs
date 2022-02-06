@@ -51,7 +51,6 @@ pub fn hash_and_encrypt_password(
         .argon2
         .hash_password(password.as_bytes(), &salt)?
         .to_string();
-    println!("Generated password hash: {}\n", password_hash);
 
     let nonce_arr: [u8; 12] = rand::random();
     let nonce = Nonce::from_slice(&nonce_arr);
@@ -63,11 +62,6 @@ pub fn hash_and_encrypt_password(
     let hexed_password: String = to_hex(peppered_password_hash);
     let hexed_nonces: String = to_hex(nonce_arr.to_vec());
 
-    println!(
-        "Generated password hash: {}\nGenerated nonce: {:?}",
-        hexed_password, hexed_nonces
-    );
-
     Ok((hexed_password, hexed_nonces))
 }
 
@@ -75,7 +69,7 @@ pub fn verify_password(
     provided_password: String,
     stored_password: String,
     stored_nonce: String,
-    config: Config,
+    config: &Config,
 ) -> bool {
     // Convert nonces from hex format to bytes
     let nonce_bytes: Vec<u8> = match from_hex(stored_nonce) {
@@ -91,7 +85,7 @@ pub fn verify_password(
     let encrypted_password = match from_hex(stored_password) {
         Ok(v) => v,
         Err(e) => {
-            println!("Failed to convert stored password to bytes: {}", e);
+            error!("Failed to convert stored password to bytes: {}", e);
             return false;
         }
     };
@@ -103,7 +97,7 @@ pub fn verify_password(
     {
         Ok(v) => v,
         Err(e) => {
-            println!("Failed to decrypt stored password using pepper, err: {}", e);
+            error!("Failed to decrypt stored password using pepper, err: {}", e);
             return false;
         }
     };

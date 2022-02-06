@@ -6,12 +6,6 @@ use rocket::fs::FileServer;
 use rocket_dyn_templates::Template;
 use sqlx::postgres::PgPoolOptions;
 
-use crate::db::account::AccountRepository;
-use crate::db::login_details::LoginDetailsRepository;
-use crate::db::login_provider::LoginProviderRepository;
-use crate::db::third_party_login::ThirdPartyLoginRepository;
-use crate::db::whitelist::WhitelistRepository;
-
 use crate::util::config::Config;
 
 mod api;
@@ -39,15 +33,11 @@ async fn main() {
                 api::login::post_login,
                 api::create_account::create_account,
                 api::create_account::get_create_account,
+                api::login_successful::get_login_successful,
             ],
         )
         .mount("/api/public", FileServer::from("static/public"))
         .manage(pool.clone())
-        .manage(AccountRepository::new(pool.clone()))
-        .manage(LoginDetailsRepository::new(pool.clone()))
-        .manage(LoginProviderRepository::new(pool.clone()))
-        .manage(ThirdPartyLoginRepository::new(pool.clone()))
-        .manage(WhitelistRepository::new(pool.clone()))
         .manage(config)
         .attach(Template::fairing())
         .launch()
