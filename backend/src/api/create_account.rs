@@ -23,6 +23,7 @@ const ERR_PASSWORDS_NOT_MATCH: &str = "Passwords does not match";
 const ERR_PASSWORD_TOO_SHORT: &str = "The password is too short";
 const ERR_PASSWORD_TOO_LONG: &str = "The password is too long";
 const ERR_EMAIL_IN_USE: &str = "That email is already in use";
+const ERR_EMAIL_NOT_WHITELISTED: &str = "The provided email is not in the whitelist";
 const ERR_INTERNAL: &str = "An internal error has occured, please try again later";
 
 const CREATE_ACCOUNT_TEMPLATE_NAME: &str = "create-account";
@@ -106,6 +107,7 @@ impl CreateAccountError {
         match self {
             CreateAccountError::Internal => ERR_INTERNAL,
             CreateAccountError::EmailInUse => ERR_EMAIL_IN_USE,
+            CreateAccountError::EmailNotWhitelisted => ERR_EMAIL_NOT_WHITELISTED,
         }
     }
 }

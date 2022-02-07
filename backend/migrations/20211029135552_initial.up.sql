@@ -19,10 +19,8 @@ CREATE TABLE login_details (
     modified_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- A third-paty login provider such as Google, Facebook, Github etc.
 CREATE TABLE login_provider (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    name TEXT NOT NULL,
+    name TEXT PRIMARY KEY,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     modified_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -30,7 +28,7 @@ CREATE TABLE login_provider (
 -- Login via a third party login provider
 CREATE TABLE third_party_login (
     account_id UUID PRIMARY KEY REFERENCES account(id),
-    login_provider_id UUID NOT NULL REFERENCES login_provider(id),
+    login_provider TEXT NOT NULL REFERENCES login_provider(name),
     email TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     modified_at TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -39,10 +37,9 @@ CREATE TABLE third_party_login (
 -- The whitelist table
 CREATE TABLE whitelist (
     email TEXT NOT NULL,
-    -- If login_provider is null it refers to login_details
-    login_provider_id UUID REFERENCES login_provider(id),
+    login_provider TEXT REFERENCES login_provider(name),
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     modified_at TIMESTAMPTZ NOT NULL DEFAULT now(),
 
-    PRIMARY KEY (email, login_provider_id)
-)
+    PRIMARY KEY (email, login_provider)
+);

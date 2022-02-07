@@ -1,3 +1,4 @@
+#![forbid(unsafe_code)]
 #![feature(try_trait_v2)]
 #[macro_use]
 extern crate rocket;
@@ -23,6 +24,8 @@ async fn main() {
         .connect(&config.database_url)
         .await
         .expect("Failed to connect to DB");
+
+    db::init(&pool).await.expect("Failed to initialize db");
 
     rocket::build()
         .mount(

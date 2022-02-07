@@ -1,5 +1,5 @@
-use crate::db::account_repository;
 use crate::db::login_details_repository;
+use crate::db::{account_repository, whitelist_repository};
 use crate::db::{new_transaction, DB};
 use crate::services::password_service;
 use crate::util::accounts_error::AccountsError;
@@ -8,8 +8,9 @@ use rocket::State;
 use sqlx::{Error, Pool};
 
 pub enum CreateAccountError {
-    Internal,   // An internal error occurred
-    EmailInUse, // The email is already being used
+    Internal,            // An internal error occurred
+    EmailInUse,          // The email is already being used
+    EmailNotWhitelisted, // The email is not in the whitelist
 }
 
 impl From<AccountsError> for CreateAccountError {
@@ -47,13 +48,29 @@ pub async fn create_account(
         return Err(CreateAccountError::EmailInUse);
     }
 
-    // TODO: Check whitelist
+    match whitelist_repository::get_local_account_by_email(&mut transaction, email).await {
+        Ok(Some(_)) => {
+            // Is whitelisted so all is fine!
+        }
+        Ok(None) => {
+            // Not whitelisted
+            error!(
+                "Cannot create account due to email {} not being whitelisted",
+                email
+            );
+            return Err(CreateAccountError::EmailNotWhitelisted);
+        }
+        Err(err) => {
+            error!("DB err: {:?}", err);
+            return Err(CreateAccountError::Internal);
+        }
+    };
+
     let account = match account_repository::insert(&mut transaction, &first_name, &last_name).await
     {
         Ok(acc) => acc,
         Err(err) => {
             error!("Failed to create account {:?}", err);
-            transaction.rollback().await?;
             return Err(CreateAccountError::Internal);
         }
     };
