@@ -1,5 +1,4 @@
 use sqlx::types::chrono::{DateTime, Utc};
-use sqlx::types::Uuid;
 
 #[derive(Debug, Clone, sqlx::FromRow)]
 pub struct Whitelist {

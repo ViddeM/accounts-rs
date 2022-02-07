@@ -7,6 +7,9 @@ use argon2::{PasswordHash, PasswordHasher, PasswordVerifier};
 use std::num::ParseIntError;
 use std::str::Utf8Error;
 
+pub const MIN_PASSWORD_LENGTH: usize = 8;
+pub const MAX_PASSWORD_LENGTH: usize = 128;
+
 #[derive(Debug)]
 pub enum PasswordErr {
     Argon2Error(argon2::Error),

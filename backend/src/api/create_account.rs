@@ -1,4 +1,4 @@
-use crate::services::create_account_service;
+use crate::services::{create_account_service, password_service};
 use crate::util::config::Config;
 use rocket::form::Form;
 use rocket::response::content::Html;
@@ -30,13 +30,10 @@ const CREATE_ACCOUNT_TEMPLATE_NAME: &str = "create-account";
 
 const LOGIN_PAGE_URL: &str = "/api/login";
 
-const MIN_PASSWORD_LENGTH: usize = 8;
-const MAX_PASSWORD_LENGTH: usize = 128;
-
 fn get_default_create_account_data() -> BTreeMap<&'static str, String> {
     let mut data: BTreeMap<&str, String> = BTreeMap::new();
-    let min_password_length = MIN_PASSWORD_LENGTH.to_string();
-    let max_password_length = MAX_PASSWORD_LENGTH.to_string();
+    let min_password_length = password_service::MIN_PASSWORD_LENGTH.to_string();
+    let max_password_length = password_service::MAX_PASSWORD_LENGTH.to_string();
     data.insert(MIN_PASSWORD_LEN_KEY, min_password_length.to_string());
     data.insert(MAX_PASSWORD_LEN_KEY, max_password_length.to_string());
     data
@@ -78,11 +75,11 @@ pub async fn create_account(
         return Either::Left(create_account_error(&mut data, ERR_PASSWORDS_NOT_MATCH));
     }
 
-    if create_account.password.len() < MIN_PASSWORD_LENGTH {
+    if create_account.password.len() < password_service::MIN_PASSWORD_LENGTH {
         return Either::Left(create_account_error(&mut data, ERR_PASSWORD_TOO_SHORT));
     }
 
-    if create_account.password.len() > MAX_PASSWORD_LENGTH {
+    if create_account.password.len() > password_service::MAX_PASSWORD_LENGTH {
         return Either::Left(create_account_error(&mut data, ERR_PASSWORD_TOO_LONG));
     }
 
