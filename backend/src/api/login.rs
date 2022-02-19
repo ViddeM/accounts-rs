@@ -15,6 +15,7 @@ const LOGIN_TEMPLATE_NAME: &str = "login";
 const ERROR_KEY: &str = "error";
 
 const ERR_INVALID_EMAIL_OR_PASSWORD: &str = "Invalid email or password";
+const ERR_ACCOUNT_NOT_ACTIVATED: &str = "The account has not yet been activated";
 const ERR_INTERNAL: &str = "An internal error occurred";
 
 const MIN_PASSWORD_LEN_KEY: &str = "min_password_len";
@@ -70,7 +71,7 @@ pub async fn post_login(
             }
             Ok(Some(login_details)) => login_details,
             Ok(None) => {
-                error!("No account with email {}", user_input.email);
+                // No account exists with the given email.
                 return Either::Left(login_error(&mut data, ERR_INVALID_EMAIL_OR_PASSWORD));
             }
         };
@@ -83,6 +84,13 @@ pub async fn post_login(
     ) {
         // Password incorrect
         return Either::Left(login_error(&mut data, ERR_INVALID_EMAIL_OR_PASSWORD));
+    }
+
+    // If we reach here, we now accept the user as authorized with the account
+
+    if !login_details.activated {
+        // The account has not yet been activated
+        return Either::Left(login_error(&mut data, ERR_ACCOUNT_NOT_ACTIVATED));
     }
 
     // Password correct

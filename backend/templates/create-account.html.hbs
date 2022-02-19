@@ -44,6 +44,9 @@
                     <p class="error-message">{{error}}</p>
                 {{/if}}
                 <input type="submit" form="create-account-form" id="submit" value="Create Account"/>
+                {{#if info}}
+                    <p>{{info}}</p>
+                {{/if}}
             </form>
         </div>
     </body>

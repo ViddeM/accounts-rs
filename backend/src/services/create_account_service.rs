@@ -1,5 +1,5 @@
-use crate::db::login_details_repository;
 use crate::db::{account_repository, whitelist_repository};
+use crate::db::{activation_code_repository, login_details_repository};
 use crate::db::{new_transaction, DB};
 use crate::services::password_service;
 use crate::util::accounts_error::AccountsError;
@@ -84,7 +84,7 @@ pub async fn create_account(
             }
         };
 
-    if let Err(err) = login_details_repository::insert(
+    let unactived_account = login_details_repository::create_unactivated_account(
         &mut transaction,
         &account,
         &email,
@@ -92,10 +92,19 @@ pub async fn create_account(
         &nonces,
     )
     .await
-    {
+    .or_else(|err| {
         error!("Failed to create login details, err: {:?}", err);
+        Err(CreateAccountError::Internal)
+    })?;
+
+    if let Err(err) =
+        activation_code_repository::insert(&mut transaction, unactived_account.account_id).await
+    {
+        error!("Failed to create activation_code, err: {:?}", err);
         return Err(CreateAccountError::Internal);
     }
+
+    // Send email to the email address for confirmation
 
     transaction.commit().await?;
     Ok(())
