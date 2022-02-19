@@ -45,7 +45,7 @@ impl From<aes_gcm::Error> for PasswordErr {
 type PasswordResult<T> = Result<T, PasswordErr>;
 
 pub fn hash_and_encrypt_password(
-    password: &String,
+    password: String,
     config: &Config,
 ) -> PasswordResult<(String, String)> {
     let salt = SaltString::generate(&mut OsRng);

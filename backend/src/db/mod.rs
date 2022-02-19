@@ -46,7 +46,7 @@ pub async fn new_transaction(db_pool: &State<Pool<DB>>) -> AccountsResult<Transa
         Ok(transaction) => Ok(transaction),
         Err(err) => {
             error!("Failed to create transaction: {:?}", err);
-            return Err(AccountsError::SqlxError(err));
+            Err(AccountsError::SqlxError(err))
         }
     }
 }

@@ -5,8 +5,8 @@ use sqlx::Transaction;
 
 pub async fn insert(
     transaction: &mut Transaction<'_, DB>,
-    first_name: &String,
-    last_name: &String,
+    first_name: &str,
+    last_name: &str,
 ) -> AccountsResult<Account> {
     Ok(sqlx::query_as!(
         Account,

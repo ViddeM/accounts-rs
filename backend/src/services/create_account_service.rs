@@ -28,10 +28,10 @@ impl From<sqlx::Error> for CreateAccountError {
 pub async fn create_account(
     config: &State<Config>,
     db_pool: &State<Pool<DB>>,
-    first_name: &String,
-    last_name: &String,
-    email: &String,
-    password: &String,
+    first_name: String,
+    last_name: String,
+    email: String,
+    password: String,
 ) -> Result<(), CreateAccountError> {
     let mut transaction = new_transaction(db_pool).await?;
 
@@ -48,7 +48,7 @@ pub async fn create_account(
         return Err(CreateAccountError::EmailInUse);
     }
 
-    match whitelist_repository::get_local_account_by_email(&mut transaction, email).await {
+    match whitelist_repository::get_local_account_by_email(&mut transaction, &email).await {
         Ok(Some(_)) => {
             // Is whitelisted so all is fine!
         }
@@ -75,17 +75,23 @@ pub async fn create_account(
         }
     };
 
-    let (password, nonces) = match password_service::hash_and_encrypt_password(&password, &config) {
-        Ok(pass) => pass,
-        Err(err) => {
-            error!("Failed to hash and encrypt password: {:?}", err);
-            return Err(CreateAccountError::Internal);
-        }
-    };
+    let (hashed_password, nonces) =
+        match password_service::hash_and_encrypt_password(password.to_owned(), config) {
+            Ok(pass) => pass,
+            Err(err) => {
+                error!("Failed to hash and encrypt password: {:?}", err);
+                return Err(CreateAccountError::Internal);
+            }
+        };
 
-    if let Err(err) =
-        login_details_repository::insert(&mut transaction, &account, &email, &password, &nonces)
-            .await
+    if let Err(err) = login_details_repository::insert(
+        &mut transaction,
+        &account,
+        &email,
+        &hashed_password,
+        &nonces,
+    )
+    .await
     {
         error!("Failed to create login details, err: {:?}", err);
         return Err(CreateAccountError::Internal);

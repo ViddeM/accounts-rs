@@ -34,8 +34,8 @@ fn get_default_create_account_data() -> BTreeMap<&'static str, String> {
     let mut data: BTreeMap<&str, String> = BTreeMap::new();
     let min_password_length = password_service::MIN_PASSWORD_LENGTH.to_string();
     let max_password_length = password_service::MAX_PASSWORD_LENGTH.to_string();
-    data.insert(MIN_PASSWORD_LEN_KEY, min_password_length.to_string());
-    data.insert(MAX_PASSWORD_LEN_KEY, max_password_length.to_string());
+    data.insert(MIN_PASSWORD_LEN_KEY, min_password_length);
+    data.insert(MAX_PASSWORD_LEN_KEY, max_password_length);
     data
 }
 
@@ -86,10 +86,10 @@ pub async fn create_account(
     if let Err(e) = create_account_service::create_account(
         config,
         db_pool,
-        &create_account.first_name,
-        &create_account.last_name,
-        &create_account.email,
-        &create_account.password,
+        create_account.first_name.to_owned(),
+        create_account.last_name.to_owned(),
+        create_account.email.to_owned(),
+        create_account.password.to_owned(),
     )
     .await
     {
@@ -100,7 +100,7 @@ pub async fn create_account(
 }
 
 impl CreateAccountError {
-    fn to_api_err<'a>(self) -> &'a str {
+    fn to_api_err<'a>(&self) -> &'a str {
         match self {
             CreateAccountError::Internal => ERR_INTERNAL,
             CreateAccountError::EmailInUse => ERR_EMAIL_IN_USE,

@@ -25,8 +25,8 @@ fn get_default_login_data() -> BTreeMap<&'static str, String> {
     let mut data: BTreeMap<&str, String> = BTreeMap::new();
     let min_password_length = password_service::MIN_PASSWORD_LENGTH.to_string();
     let max_password_length = password_service::MAX_PASSWORD_LENGTH.to_string();
-    data.insert(MIN_PASSWORD_LEN_KEY, min_password_length.to_string());
-    data.insert(MAX_PASSWORD_LEN_KEY, max_password_length.to_string());
+    data.insert(MIN_PASSWORD_LEN_KEY, min_password_length);
+    data.insert(MAX_PASSWORD_LEN_KEY, max_password_length);
     data
 }
 
@@ -75,17 +75,16 @@ pub async fn post_login(
             }
         };
 
-    if password_service::verify_password(
-        user_input.password.clone(),
-        login_details.password.clone(),
-        login_details.password_nonces.clone(),
-        &config,
-    ) == false
-    {
+    if !password_service::verify_password(
+        user_input.password.to_owned(),
+        login_details.password.to_owned(),
+        login_details.password_nonces,
+        config,
+    ) {
         // Password incorrect
         return Either::Left(login_error(&mut data, ERR_INVALID_EMAIL_OR_PASSWORD));
     }
 
     // Password correct
-    return Either::Right(Redirect::to(LOGIN_SUCCESSFUL_ADDRESS));
+    Either::Right(Redirect::to(LOGIN_SUCCESSFUL_ADDRESS))
 }

@@ -24,9 +24,9 @@ WHERE email = $1
 pub async fn insert(
     transaction: &mut Transaction<'_, DB>,
     account: &Account,
-    email: &String,
-    password: &String,
-    password_nonces: &String,
+    email: &str,
+    password: &str,
+    password_nonces: &str,
 ) -> AccountsResult<LoginDetails> {
     Ok(sqlx::query_as!(
         LoginDetails,

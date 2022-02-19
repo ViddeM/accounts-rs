@@ -6,7 +6,7 @@ use sqlx::Transaction;
 
 pub async fn get_local_account_by_email(
     transaction: &mut Transaction<'_, DB>,
-    email: &String,
+    email: &str,
 ) -> AccountsResult<Option<Whitelist>> {
     Ok(sqlx::query_as!(
         Whitelist,
