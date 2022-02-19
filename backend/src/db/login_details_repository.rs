@@ -62,3 +62,23 @@ WHERE account_id = ANY($1)
     .await?;
     Ok(())
 }
+
+pub async fn activate_account(
+    transaction: &mut Transaction<'_, DB>,
+    account_id: Uuid,
+) -> AccountsResult<()> {
+    sqlx::query_as!(
+        LoginDetails,
+        "
+UPDATE login_details
+SET 
+    activated = true,
+    modified_at = NOW()
+WHERE account_id = $1
+        ",
+        account_id
+    )
+    .execute(transaction)
+    .await?;
+    Ok(())
+}

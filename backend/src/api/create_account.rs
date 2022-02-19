@@ -3,16 +3,16 @@ use crate::util::config::Config;
 use rocket::form::Form;
 use rocket::response::content::Html;
 
-use rocket::{Either, State};
+use rocket::State;
 use rocket_dyn_templates::Template;
 
 use crate::db::DB;
 use crate::services::create_account_service::CreateAccountError;
-use rocket::response::Redirect;
 use sqlx::Pool;
 use std::collections::BTreeMap;
 
 const ERROR_KEY: &str = "error";
+const INFO_KEY: &str = "info";
 const FIRST_NAME_KEY: &str = "first_name";
 const LAST_NAME_KEY: &str = "last_name";
 const EMAIL_KEY: &str = "email";
@@ -26,9 +26,11 @@ const ERR_EMAIL_IN_USE: &str = "That email is already in use";
 const ERR_EMAIL_NOT_WHITELISTED: &str = "The provided email is not in the whitelist";
 const ERR_INTERNAL: &str = "An internal error has occured, please try again later";
 
-const CREATE_ACCOUNT_TEMPLATE_NAME: &str = "create-account";
+const INFO_EMAIL_HAS_BEEN_SENT: &str = "Your account has been created but has yet to be activated,\
+                                        an email has been sent to the provided email address with \
+                                        steps to activate your account.";
 
-const LOGIN_PAGE_URL: &str = "/api/login";
+const CREATE_ACCOUNT_TEMPLATE_NAME: &str = "create-account";
 
 fn get_default_create_account_data() -> BTreeMap<&'static str, String> {
     let mut data: BTreeMap<&str, String> = BTreeMap::new();
@@ -64,7 +66,7 @@ pub async fn create_account(
     config: &State<Config>,
     db_pool: &State<Pool<DB>>,
     create_account: Form<CreateAccountForm>,
-) -> Either<Html<Template>, Redirect> {
+) -> Html<Template> {
     let mut data = get_default_create_account_data();
 
     data.insert(FIRST_NAME_KEY, create_account.first_name.to_string());
@@ -72,15 +74,15 @@ pub async fn create_account(
     data.insert(EMAIL_KEY, create_account.email.to_string());
 
     if create_account.password != create_account.password_repeat {
-        return Either::Left(create_account_error(&mut data, ERR_PASSWORDS_NOT_MATCH));
+        return create_account_error(&mut data, ERR_PASSWORDS_NOT_MATCH);
     }
 
     if create_account.password.len() < password_service::MIN_PASSWORD_LENGTH {
-        return Either::Left(create_account_error(&mut data, ERR_PASSWORD_TOO_SHORT));
+        return create_account_error(&mut data, ERR_PASSWORD_TOO_SHORT);
     }
 
     if create_account.password.len() > password_service::MAX_PASSWORD_LENGTH {
-        return Either::Left(create_account_error(&mut data, ERR_PASSWORD_TOO_LONG));
+        return create_account_error(&mut data, ERR_PASSWORD_TOO_LONG);
     }
 
     if let Err(e) = create_account_service::create_account(
@@ -93,10 +95,11 @@ pub async fn create_account(
     )
     .await
     {
-        return Either::Left(create_account_error(&mut data, e.to_api_err()));
+        return create_account_error(&mut data, e.to_api_err());
     };
 
-    Either::Right(Redirect::to(LOGIN_PAGE_URL))
+    data.insert(INFO_KEY, INFO_EMAIL_HAS_BEEN_SENT.to_string());
+    return Html(Template::render(CREATE_ACCOUNT_TEMPLATE_NAME, &data));
 }
 
 impl CreateAccountError {

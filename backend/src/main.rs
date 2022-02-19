@@ -43,6 +43,8 @@ async fn main() {
                 api::create_account::create_account,
                 api::create_account::get_create_account,
                 api::login_successful::get_login_successful,
+                api::activate_account::get_activate_account,
+                api::activate_account::post_activate_account,
             ],
         )
         .mount("/api/public", FileServer::from("static/public"))

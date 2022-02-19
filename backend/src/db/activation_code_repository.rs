@@ -38,3 +38,42 @@ RETURNING id, login_details, code, created_at, modified_at
     .fetch_all(transaction)
     .await?)
 }
+
+pub async fn get_by_login_details_and_code(
+    transaction: &mut Transaction<'_, DB>,
+    login_details: Uuid,
+    code: Uuid,
+) -> AccountsResult<Option<ActivationCode>> {
+    Ok(sqlx::query_as!(
+        ActivationCode,
+        "
+SELECT id, login_details, code, created_at, modified_at
+FROM activation_code
+WHERE
+    login_details = $1 AND
+    code = $2
+        ",
+        login_details,
+        code
+    )
+    .fetch_optional(transaction)
+    .await?)
+}
+
+pub async fn delete(
+    transaction: &mut Transaction<'_, DB>,
+    login_details: Uuid,
+) -> AccountsResult<()> {
+    sqlx::query_as!(
+        ActivationCode,
+        "
+DELETE
+FROM activation_code
+WHERE login_details = $1
+    ",
+        login_details
+    )
+    .execute(transaction)
+    .await?;
+    Ok(())
+}
