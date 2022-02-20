@@ -30,7 +30,7 @@ pub async fn delete_outdated(
         "
 DELETE
 FROM activation_code
-WHERE created_at + ($1 * interval '1 minute') > NOW()
+WHERE created_at + ($1 * interval '1 minute') < NOW()
 RETURNING id, login_details, code, created_at, modified_at
         ",
         lifetime_minutes as f64

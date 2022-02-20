@@ -14,7 +14,7 @@ const ACTIVATE_ACCOUNT_TEMPLATE_NAME: &str = "activate-account";
 const ERROR_KEY: &str = "error";
 const INFO_KEY: &str = "info";
 const EMAIL_KEY: &str = "email";
-const CODE_KEY: &str = "code";
+const CODE_KEY: &str = "actiation_code";
 
 const ERR_INVALID_EMAIL_CODE: &str = "Invalid email or code";
 const ERR_INTERNAL: &str = "An internal error has occured, please contact the system administrator";
@@ -24,7 +24,7 @@ const INFO_ACTIVATION_SUCCESSFUL: &str =
 
 #[get("/activate_account")]
 pub async fn get_activate_account() -> Html<Template> {
-    let mut data: BTreeMap<&str, &str> = BTreeMap::new();
+    let data: BTreeMap<&str, &str> = BTreeMap::new();
     Html(Template::render(ACTIVATE_ACCOUNT_TEMPLATE_NAME, data))
 }
 

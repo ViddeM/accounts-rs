@@ -3,11 +3,10 @@
 #[macro_use]
 extern crate rocket;
 
-use futures::executor::block_on;
 use rocket::fs::FileServer;
 use rocket_dyn_templates::Template;
 use sqlx::postgres::PgPoolOptions;
-use std::thread;
+use tokio::task;
 
 use crate::util::config::Config;
 
@@ -31,7 +30,8 @@ async fn main() {
     db::init(&pool).await.expect("Failed to initialize db");
 
     let pool_clone = pool.clone();
-    thread::spawn(move || block_on(background_task::run_background_tasks(pool_clone)));
+
+    task::spawn(background_task::run_background_tasks(pool_clone));
 
     rocket::build()
         .mount(
