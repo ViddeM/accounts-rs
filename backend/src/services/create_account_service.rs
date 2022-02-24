@@ -1,16 +1,23 @@
 use crate::db::{account_repository, whitelist_repository};
 use crate::db::{activation_code_repository, login_details_repository};
 use crate::db::{new_transaction, DB};
-use crate::services::password_service;
+use crate::services::email_service::EmailError;
+use crate::services::{email_service, password_service};
 use crate::util::accounts_error::AccountsError;
 use crate::util::config::Config;
 use rocket::State;
 use sqlx::{Error, Pool};
 
+#[derive(Debug, thiserror::Error)]
 pub enum CreateAccountError {
-    Internal,            // An internal error occurred
-    EmailInUse,          // The email is already being used
+    #[error("An internal error occured")]
+    Internal, // An internal error occurred
+    #[error("The email is already in use")]
+    EmailInUse, // The email is already being used
+    #[error("Email is not in the whitelist")]
     EmailNotWhitelisted, // The email is not in the whitelist
+    #[error("Email error")]
+    EmailError(#[from] EmailError),
 }
 
 impl From<AccountsError> for CreateAccountError {
@@ -24,6 +31,8 @@ impl From<sqlx::Error> for CreateAccountError {
         CreateAccountError::Internal
     }
 }
+
+const ACTIVATE_ACCOUNT_ENDPOINT: &str = "/api/activate_account";
 
 pub async fn create_account(
     config: &State<Config>,
@@ -97,14 +106,36 @@ pub async fn create_account(
         Err(CreateAccountError::Internal)
     })?;
 
-    if let Err(err) =
-        activation_code_repository::insert(&mut transaction, unactived_account.account_id).await
-    {
-        error!("Failed to create activation_code, err: {:?}", err);
-        return Err(CreateAccountError::Internal);
-    }
+    let activation_code =
+        activation_code_repository::insert(&mut transaction, unactived_account.account_id)
+            .await
+            .or_else(|err| {
+                error!("Failed to create activation_code, err: {:?}", err);
+                Err(CreateAccountError::Internal)
+            })?;
 
     // Send email to the email address for confirmation
+    email_service::send_email(
+        unactived_account.email,
+        String::from("Aktivera ditt accounts-rs konto"),
+        // TODO: Make the activation time configurable so that it is correct.
+        format!(
+            r#"Hej!
+
+Du har nu skapat ett konto på accounts-rs men för att kunna använda det så måste du aktivera det.
+För att aktivera ditt konto fyll i koden nedan på {activate_account_uri}.
+
+{code}
+
+Om du inte har aktiverat ditt konto inom 12 timmar kommer ditt konto att tas bort.
+        "#,
+            activate_account_uri =
+                format!("{}{}", config.backend_address, ACTIVATE_ACCOUNT_ENDPOINT),
+            code = activation_code.code
+        ),
+        config,
+    )
+    .await?;
 
     transaction.commit().await?;
     Ok(())
