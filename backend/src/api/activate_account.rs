@@ -14,7 +14,7 @@ const ACTIVATE_ACCOUNT_TEMPLATE_NAME: &str = "activate-account";
 const ERROR_KEY: &str = "error";
 const INFO_KEY: &str = "info";
 const EMAIL_KEY: &str = "email";
-const CODE_KEY: &str = "actiation_code";
+const CODE_KEY: &str = "activation_code";
 
 const ERR_INVALID_EMAIL_CODE: &str = "Invalid email or code";
 const ERR_INTERNAL: &str = "An internal error has occured, please contact the system administrator";
