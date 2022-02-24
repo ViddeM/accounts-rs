@@ -46,6 +46,7 @@ pub async fn post_activate_account(
     let code = match Uuid::parse_str(&activate_account.code) {
         Err(err) => {
             println!("Failed to parse code to uuid, err: {}", err);
+            data.insert(ERROR_KEY, ERR_INVALID_EMAIL_CODE);
             return Html(Template::render(ACTIVATE_ACCOUNT_TEMPLATE_NAME, data));
         }
         Ok(val) => val,
