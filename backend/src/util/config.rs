@@ -2,8 +2,9 @@ use aes_gcm::NewAead;
 use aes_gcm::{Aes256Gcm, Key};
 use argon2::{Algorithm, Argon2, Params, Version};
 use dotenv;
-use std::env;
+use serde::{Deserialize, Serialize};
 use std::env::VarError;
+use std::{env, fs, io};
 
 #[derive(Debug, thiserror::Error)]
 pub enum ConfigError {
@@ -11,6 +12,10 @@ pub enum ConfigError {
     EnvVarError(#[from] VarError),
     #[error("Empty variable error")]
     VarEmpty(String),
+    #[error("Serde json error")]
+    SerdeJsonError(#[from] serde_json::Error),
+    #[error("IO error")]
+    IOError(#[from] io::Error),
 }
 
 pub type ConfigResult<T> = Result<T, ConfigError>;
@@ -27,6 +32,9 @@ pub struct Config {
     pub database_url: String,
     pub pepper_cipher: Aes256Gcm,
     pub argon2: Argon2<'static>,
+    pub service_account: ServiceAccount,
+    pub send_from_email_address: String,
+    pub backend_address: String,
 }
 
 impl Config {
@@ -45,17 +53,25 @@ impl Config {
             .expect("Failed to setup argon2 parameters"),
         );
 
-        let pepper = load_env_str("PEPPER".to_string())?;
+        let pepper = load_env_str(String::from("PEPPER"))?;
         if pepper.len() != REQUIRED_PEPPER_BYTES {
             panic!("Pepper must be exactly {} bytes", REQUIRED_PEPPER_BYTES);
         }
         let pepper_key = Key::from_slice(pepper.as_bytes());
         let pepper_cipher = Aes256Gcm::new(pepper_key);
 
+        // Load service account file
+        let service_account_file = load_env_str(String::from("SERVICE_ACCOUNT_FILE"))?;
+        let file_contents = fs::read_to_string(service_account_file)?;
+        let service_account: ServiceAccount = serde_json::from_str(&file_contents)?;
+
         Ok(Config {
-            database_url: load_env_str("DATABASE_URL".to_string())?,
+            database_url: load_env_str(String::from("DATABASE_URL"))?,
             pepper_cipher,
             argon2,
+            service_account,
+            send_from_email_address: load_env_str(String::from("SEND_FROM_EMAIL_ADDRESS"))?,
+            backend_address: load_env_str(String::from("BACKEND_ADDRESS"))?,
         })
     }
 }
@@ -68,4 +84,19 @@ fn load_env_str(key: String) -> ConfigResult<String> {
     }
 
     Ok(var)
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct ServiceAccount {
+    #[serde(rename = "type")]
+    pub account_type: String,
+    pub project_id: String,
+    pub private_key_id: String,
+    pub private_key: String,
+    pub client_email: String,
+    pub client_id: String,
+    pub auth_uri: String,
+    pub token_uri: String,
+    pub auth_provider_x509_cert_url: String,
+    pub client_x509_cert_url: String,
 }
