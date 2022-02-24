@@ -105,7 +105,7 @@ pub async fn create_account(
 impl CreateAccountError {
     fn to_api_err<'a>(&self) -> &'a str {
         match self {
-            CreateAccountError::Internal => ERR_INTERNAL,
+            CreateAccountError::Internal | CreateAccountError::EmailError(_) => ERR_INTERNAL,
             CreateAccountError::EmailInUse => ERR_EMAIL_IN_USE,
             CreateAccountError::EmailNotWhitelisted => ERR_EMAIL_NOT_WHITELISTED,
         }
