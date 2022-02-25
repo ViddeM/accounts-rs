@@ -1,6 +1,8 @@
 use crate::db::{account_repository, whitelist_repository};
 use crate::db::{activation_code_repository, login_details_repository};
 use crate::db::{new_transaction, DB};
+use crate::models::activation_code::ActivationCode;
+use crate::models::login_details::LoginDetails;
 use crate::services::email_service::EmailError;
 use crate::services::{email_service, password_service};
 use crate::util::accounts_error::AccountsError;
@@ -93,7 +95,7 @@ pub async fn create_account(
             }
         };
 
-    let unactived_account = login_details_repository::create_unactivated_account(
+    let unactivated_account = login_details_repository::create_unactivated_account(
         &mut transaction,
         &account,
         &email,
@@ -107,36 +109,46 @@ pub async fn create_account(
     })?;
 
     let activation_code =
-        activation_code_repository::insert(&mut transaction, unactived_account.account_id)
+        activation_code_repository::insert(&mut transaction, unactivated_account.account_id)
             .await
             .or_else(|err| {
                 error!("Failed to create activation_code, err: {:?}", err);
                 Err(CreateAccountError::Internal)
             })?;
 
+    let email_content = format_email_content(config, &unactivated_account, &activation_code);
+
     // Send email to the email address for confirmation
     email_service::send_email(
-        unactived_account.email,
-        String::from("Aktivera ditt accounts-rs konto"),
+        &unactivated_account.email,
+        "Aktivera ditt accounts-rs konto",
         // TODO: Make the activation time configurable so that it is correct.
-        format!(
-            r#"Hej!
-
-Du har nu skapat ett konto på accounts-rs men för att kunna använda det så måste du aktivera det.
-För att aktivera ditt konto fyll i koden nedan på {activate_account_uri}.
-
-{code}
-
-Om du inte har aktiverat ditt konto inom 12 timmar kommer ditt konto att tas bort.
-        "#,
-            activate_account_uri =
-                format!("{}{}", config.backend_address, ACTIVATE_ACCOUNT_ENDPOINT),
-            code = activation_code.code
-        ),
+        &email_content,
         config,
     )
     .await?;
 
     transaction.commit().await?;
     Ok(())
+}
+
+fn format_email_content(
+    config: &Config,
+    unactivated_account: &LoginDetails,
+    activation_code: &ActivationCode,
+) -> String {
+    format!(
+        r#"Hej!
+
+Du har nu skapat ett konto på accounts-rs men för att kunna använda det så måste du aktivera det.
+För att aktivera ditt konto fyll i koden nedan på {activate_account_uri}?email={email}.
+
+{code}
+
+Om du inte har aktiverat ditt konto inom 12 timmar kommer ditt konto att tas bort.
+        "#,
+        activate_account_uri = format!("{}{}", config.backend_address, ACTIVATE_ACCOUNT_ENDPOINT),
+        email = unactivated_account.email,
+        code = activation_code.code
+    )
 }

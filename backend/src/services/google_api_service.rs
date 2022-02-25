@@ -122,10 +122,10 @@ struct GoogleSendEmailResponse {
 }
 
 pub async fn send_email(
-    receiver_email: String,
-    subject: String,
-    content: String,
-    token: String,
+    receiver_email: &str,
+    subject: &str,
+    content: &str,
+    token: &str,
     config: &Config,
 ) -> Result<(), GoogleApiError> {
     let send_email_request = GoogleSendEmailRequest::new(
