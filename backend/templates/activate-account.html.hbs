@@ -1,34 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <title>Activate account</title>
+    <title>Account activation</title>
     <link rel="stylesheet" type="text/css" href="/api/public/styles.css" media="screen" />
 </head>
+
 <body>
-<div class="login-wrapper">
-    <form class="card form" id="activate-account-form" method="POST" action="/api/activate_account">
-        <h3>
-            Activate your Accounts-RS account.
-        </h3>
-        <div class="form-row">
-            <label for="email">Email: </label>
-            <input type="email" form="activate-account-form" id="email" maxlength="60" placeholder="the email you signed up with"
-                   required="required" autocapitalize="none" autocomplete="email"
-                   name="email" value={{email_address}}>
-        </div>
-        <div class="form-row">
-            <label for="code">Code: </label>
-            <input type="text" form="activate-account-form" id="code" maxlength="36" minlength="36" placeholder="the code you received by email"
-                   required="required" autocapitalize="none" name="code" value={{activation_code}}>
-        </div>
-        {{#if error}}
+    <div class="login-wrapper">
+        <div class="card">
+            <h3>
+                Account activation
+            </h3>
+            {{#if error}}
             <p class="error-message">{{error}}</p>
-        {{/if}}
-        <input type="submit" form="activate-account-form" id="submit" value="Activate Account"/>
-        {{#if info}}
+            {{/if}}
+            {{#if info}}
             <p>{{info}}</p>
-        {{/if}}
-    </form>
-</div>
+            {{/if}}
+            <a class="link-button" href="/api/login">Login</a>
+        </div>
+    </div>
 </body>
+
 </html>

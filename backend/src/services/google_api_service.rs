@@ -37,6 +37,7 @@ impl GoogleAuthRequest {
 }
 
 const GMAIL_SEND_EMAIL_SCOPE: &str = "https://www.googleapis.com/auth/gmail.send";
+
 const GOOGLE_AUD_VALUE: &str = "https://oauth2.googleapis.com/token";
 
 fn create_jwt(config: &Config) -> Result<String, GoogleApiError> {
@@ -45,6 +46,7 @@ fn create_jwt(config: &Config) -> Result<String, GoogleApiError> {
         digest: MessageDigest::sha256(),
         key: private_key,
     };
+
     let mut claims: BTreeMap<&str, &str> = BTreeMap::new();
 
     claims.insert("iss", &config.service_account.client_email);

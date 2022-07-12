@@ -138,14 +138,12 @@ fn format_email_content(
     activation_code: &ActivationCode,
 ) -> String {
     format!(
-        r#"Hej!
+        r#"Hi!
 
-Du har nu skapat ett konto på accounts-rs men för att kunna använda det så måste du aktivera det.
-För att aktivera ditt konto fyll i koden nedan på {activate_account_uri}?email={email}.
+An account has been created for accounts-rs with this email but it must be activated before use.
+To activate the account, go to the following address: {activate_account_uri}?email={email}&id={code}.
 
-{code}
-
-Om du inte har aktiverat ditt konto inom 12 timmar kommer ditt konto att tas bort.
+If the account is not activated within 12 hours it will be deleted.
         "#,
         activate_account_uri = format!("{}{}", config.backend_address, ACTIVATE_ACCOUNT_ENDPOINT),
         email = unactivated_account.email,
