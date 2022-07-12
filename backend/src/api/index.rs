@@ -1,5 +1,6 @@
+use rocket::response::Redirect;
 
 #[get("/")]
-pub fn index() -> &'static str {
-    "Hello, world"
+pub fn index() -> Redirect {
+    Redirect::permanent(uri!("/api/login"))
 }
