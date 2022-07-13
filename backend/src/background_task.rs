@@ -19,6 +19,9 @@ pub async fn run_background_tasks(db_pool: Pool<DB>) {
         delete_unactived_accounts(&db_pool)
             .await
             .expect("Failed to delete unactivated accounts");
+        delete_unused_password_resets(&db_pool)
+            .await
+            .expect("Failed to delete unused password resets");
         println!(
             "Run successful, sleeping for {} minutes",
             time_between_tasks.as_secs() / 60
