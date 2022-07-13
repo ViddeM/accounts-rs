@@ -1,7 +1,7 @@
 use crate::db::DB;
 use crate::models::account::Account;
 use crate::models::login_details::LoginDetails;
-use crate::util::accounts_error::AccountsResult;
+use crate::util::accounts_error::{AccountsError, AccountsResult};
 use sqlx::Transaction;
 use uuid::Uuid;
 
@@ -40,6 +40,30 @@ RETURNING account_id, email, password, password_nonces, created_at, modified_at,
         email,
         password,
         password_nonces,
+    )
+    .fetch_one(transaction)
+    .await?)
+}
+
+pub async fn update_account_password(
+    transaction: &mut Transaction<'_, DB>,
+    login_details: &LoginDetails,
+    new_password: &str,
+    new_password_nonces: &str,
+) -> AccountsResult<LoginDetails> {
+    Ok(sqlx::query_as!(
+        LoginDetails,
+        "
+UPDATE login_details
+SET password        = $1,
+    password_nonces = $2,
+    modified_at     = NOW()
+WHERE account_id=$3
+RETURNING account_id, email, password, password_nonces, created_at, modified_at, activated
+    ",
+        new_password,
+        new_password_nonces,
+        login_details.account_id,
     )
     .fetch_one(transaction)
     .await?)

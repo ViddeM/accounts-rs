@@ -28,7 +28,7 @@ pub async fn get_activate_account(
     let mut data: BTreeMap<&str, &str> = BTreeMap::new();
 
     if email.is_none() || id.is_none() {
-        println!("Email or code was empty");
+        error!("Email or code was empty");
         data.insert(ERROR_KEY, ERR_INVALID_EMAIL_CODE);
         return Html(Template::render(ACTIVATE_ACCOUNT_TEMPLATE_NAME, data));
     }
@@ -38,7 +38,7 @@ pub async fn get_activate_account(
 
     let code = match Uuid::parse_str(&id) {
         Err(err) => {
-            println!("Failed to parse code to uuid, err: {}", err);
+            error!("Failed to parse code to uuid, err: {}", err);
             data.insert(ERROR_KEY, ERR_INVALID_EMAIL_CODE);
             return Html(Template::render(ACTIVATE_ACCOUNT_TEMPLATE_NAME, data));
         }
@@ -51,7 +51,7 @@ pub async fn get_activate_account(
                 data.insert(ERROR_KEY, ERR_INVALID_EMAIL_CODE);
             }
             ActivateAccountError::Internal => {
-                println!("Internal error occured!");
+                error!("Internal error occured!");
                 data.insert(ERROR_KEY, ERR_INTERNAL);
             }
         }
