@@ -22,6 +22,23 @@ RETURNING id, login_details, code, created_at, modified_at
     .await?)
 }
 
+pub async fn get_by_login_details(
+    transaction: &mut Transaction<'_, DB>,
+    login_details: Uuid,
+) -> AccountsResult<Option<PasswordReset>> {
+    Ok(sqlx::query_as!(
+        PasswordReset,
+        "
+SELECT id, login_details, code, created_at, modified_at
+FROM password_reset
+WHERE login_details = $1
+        ",
+        login_details
+    )
+    .fetch_optional(transaction)
+    .await?)
+}
+
 pub async fn delete_outdated(
     transaction: &mut Transaction<'_, DB>,
     lifetime_minutes: u64,
