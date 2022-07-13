@@ -9,7 +9,7 @@ use tokio::time;
 use uuid::Uuid;
 
 // 30 minutes
-const SECONDS_BETWEEN_TASKS: u64 = 30 * 60;
+const SECONDS_BETWEEN_TASKS: u64 = 60 * 30;
 
 pub async fn run_background_tasks(db_pool: Pool<DB>) {
     let time_between_tasks = Duration::from_secs(SECONDS_BETWEEN_TASKS);
