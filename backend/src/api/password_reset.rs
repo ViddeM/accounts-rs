@@ -26,7 +26,8 @@ const CODE_KEY: &str = "code";
 const ERROR_KEY: &str = "error";
 
 const EMAIL_MIGHT_HAVE_BEEN_SENT: &str = "If an account with that email exists, an email has been sent to that address with a code to reset the password of the account.";
-const INVALID_EMAIL_OR_CODE: &str = "Invalid code or email";
+const INVALID_EMAIL_OR_CODE: &str =
+    "Either the email or the code is invalid or the code is expired";
 const PASSWORD_RESET_SUCCESSFUL: &str =
     "Password reset was successful, you can now login with your new password";
 
