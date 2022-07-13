@@ -11,7 +11,7 @@ use uuid::Uuid;
 
 use crate::{
     db::DB,
-    services::reset_password_service::{self, initiate_password_reset, ResetPasswordError},
+    services::reset_password_service::{self, ResetPasswordError},
     util::config::Config,
 };
 
