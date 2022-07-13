@@ -1,5 +1,6 @@
 use crate::db::{
-    account_repository, activation_code_repository, login_details_repository, new_transaction, DB,
+    account_repository, activation_code_repository, login_details_repository, new_transaction,
+    reset_password_repository, DB,
 };
 use crate::util::accounts_error::AccountsResult;
 use sqlx::Pool;
@@ -7,7 +8,8 @@ use std::time::Duration;
 use tokio::time;
 use uuid::Uuid;
 
-const SECONDS_BETWEEN_TASKS: u64 = 30 * 60 * 60;
+// 30 minutes
+const SECONDS_BETWEEN_TASKS: u64 = 30 * 60;
 
 pub async fn run_background_tasks(db_pool: Pool<DB>) {
     let time_between_tasks = Duration::from_secs(SECONDS_BETWEEN_TASKS);
@@ -56,6 +58,32 @@ async fn delete_unactived_accounts(db_pool: &Pool<DB>) -> AccountsResult<()> {
     println!(
         "Delete unactivated accounts job ran successfully, deleted {}",
         unactivated_account_ids.len()
+    );
+
+    Ok(())
+}
+
+// 3 hours
+const MINUTES_TO_RESET_PASSWORD: u64 = 60 * 3;
+
+async fn delete_unused_password_resets(db_pool: &Pool<DB>) -> AccountsResult<()> {
+    println!("Begin deletion of unused password resets");
+
+    let mut transaction = new_transaction(&db_pool).await?;
+
+    let outdated_password_resets =
+        reset_password_repository::delete_outdated(&mut transaction, MINUTES_TO_RESET_PASSWORD)
+            .await?;
+    println!(
+        "Deleted outdated codes {:?} using {}",
+        outdated_password_resets, MINUTES_TO_RESET_PASSWORD
+    );
+
+    transaction.commit().await?;
+
+    println!(
+        "Delete unused password resets job ran successfully, deleted {}",
+        outdated_password_resets.len()
     );
 
     Ok(())

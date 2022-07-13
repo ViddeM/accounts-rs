@@ -8,7 +8,7 @@ use crate::services::{email_service, password_service};
 use crate::util::accounts_error::AccountsError;
 use crate::util::config::Config;
 use rocket::State;
-use sqlx::{Error, Pool};
+use sqlx::Pool;
 
 #[derive(Debug, thiserror::Error)]
 pub enum CreateAccountError {
@@ -29,7 +29,7 @@ impl From<AccountsError> for CreateAccountError {
 }
 
 impl From<sqlx::Error> for CreateAccountError {
-    fn from(_: Error) -> Self {
+    fn from(_: sqlx::Error) -> Self {
         CreateAccountError::Internal
     }
 }
@@ -121,7 +121,7 @@ pub async fn create_account(
     // Send email to the email address for confirmation
     email_service::send_email(
         &unactivated_account.email,
-        "Aktivera ditt accounts-rs konto",
+        "Activate your accounts-rs account",
         // TODO: Make the activation time configurable so that it is correct.
         &email_content,
         config,
