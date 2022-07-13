@@ -1,3 +1,4 @@
+use chrono::Utc;
 use rocket::State;
 use sqlx::Pool;
 use uuid::Uuid;
@@ -33,6 +34,9 @@ impl From<sqlx::Error> for ResetPasswordError {
     }
 }
 
+// 1 minute
+const RESET_PASSWORD_COOLDOWN_SECONDS: i64 = 60 * 1;
+
 pub async fn initiate_password_reset(
     config: &State<Config>,
     db_pool: &State<Pool<DB>>,
@@ -57,6 +61,35 @@ pub async fn initiate_password_reset(
             return Ok(());
         }
     };
+
+    let existing_password_reset =
+        reset_password_repository::get_by_login_details(&mut transaction, account.account_id)
+            .await
+            .or_else(|err| {
+                error!(
+                    "Failed to retrieve existing password reset for account, err: {:?}",
+                    err
+                );
+                Err(ResetPasswordError::Internal)
+            })?;
+
+    if let Some(password_reset) = existing_password_reset {
+        let now = Utc::now();
+        let diff = now.signed_duration_since(password_reset.created_at);
+        if diff.num_seconds() < RESET_PASSWORD_COOLDOWN_SECONDS {
+            // Less than the required number of seconds has passed since the last password
+            println!("Tried to reset password within cooldown period");
+            return Ok(());
+        } else {
+            // Delete the old password reset and create a new one
+            reset_password_repository::delete_password_reset(&mut transaction, password_reset.id)
+                .await
+                .or_else(|err| {
+                    error!("Failed to delete old password reset, err: {:?}", err);
+                    Err(ResetPasswordError::Internal)
+                })?;
+        }
+    }
 
     let reset_password = reset_password_repository::insert(&mut transaction, account.account_id)
         .await
