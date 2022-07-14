@@ -2,7 +2,9 @@ use crate::db::login_details_repository;
 use crate::db::{new_transaction, DB};
 use crate::services::password_service;
 use crate::util::config::Config;
+use crate::util::session::set_session;
 use rocket::form::Form;
+use rocket::http::CookieJar;
 use rocket::response::content::Html;
 use rocket::response::Redirect;
 use rocket::{Either, State};
@@ -53,6 +55,7 @@ pub async fn post_login(
     db_pool: &State<Pool<DB>>,
     config: &State<Config>,
     user_input: Form<LoginForm>,
+    cookies: &CookieJar<'_>,
 ) -> Either<Html<Template>, Redirect> {
     let mut data: BTreeMap<&str, String> = get_default_login_data();
 
@@ -93,6 +96,11 @@ pub async fn post_login(
         return Either::Left(login_error(&mut data, ERR_ACCOUNT_NOT_ACTIVATED));
     }
 
-    // Password correct
+    // Password correct, set session cookie
+    set_session(
+        &cookies,
+        String::from("Here is the super secret (not rly) session id"),
+    );
+
     Either::Right(Redirect::to(LOGIN_SUCCESSFUL_ADDRESS))
 }

@@ -1,7 +1,7 @@
 use crate::db::DB;
 use crate::models::account::Account;
 use crate::models::login_details::LoginDetails;
-use crate::util::accounts_error::{AccountsError, AccountsResult};
+use crate::util::accounts_error::AccountsResult;
 use sqlx::Transaction;
 use uuid::Uuid;
 
