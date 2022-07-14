@@ -16,6 +16,8 @@ pub enum ConfigError {
     SerdeJsonError(#[from] serde_json::Error),
     #[error("IO error")]
     IOError(#[from] io::Error),
+    #[error("Invalid bool `{0}`")]
+    InvalidBool(String),
 }
 
 pub type ConfigResult<T> = Result<T, ConfigError>;
@@ -35,6 +37,7 @@ pub struct Config {
     pub service_account: ServiceAccount,
     pub send_from_email_address: String,
     pub backend_address: String,
+    pub offline_mode: bool,
 }
 
 impl Config {
@@ -72,6 +75,7 @@ impl Config {
             service_account,
             send_from_email_address: load_env_str(String::from("SEND_FROM_EMAIL_ADDRESS"))?,
             backend_address: load_env_str(String::from("BACKEND_ADDRESS"))?,
+            offline_mode: load_env_bool(String::from("OFFLINE_MODE"))?,
         })
     }
 }
@@ -84,6 +88,15 @@ fn load_env_str(key: String) -> ConfigResult<String> {
     }
 
     Ok(var)
+}
+
+fn load_env_bool(key: String) -> ConfigResult<bool> {
+    let var = load_env_str(key)?;
+    match var.as_str() {
+        "false" => Ok(false),
+        "true" => Ok(true),
+        _ => Err(ConfigError::InvalidBool(var)),
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone)]

@@ -14,7 +14,20 @@ pub async fn send_email(
     content: &str,
     config: &Config,
 ) -> Result<(), EmailError> {
-    let token = google_api_service::retrieve_token(config).await?;
-    google_api_service::send_email(receiver_email, subject, content, &token, config).await?;
+    if config.offline_mode {
+        println!(
+            "OFFLINE_MODE SENDING EMAIL:
+To: {}
+Subject: {}
+
+{}
+        
+        ",
+            receiver_email, subject, content
+        )
+    } else {
+        let token = google_api_service::retrieve_token(config).await?;
+        google_api_service::send_email(receiver_email, subject, content, &token, config).await?;
+    }
     Ok(())
 }
