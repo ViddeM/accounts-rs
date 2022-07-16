@@ -1,7 +1,7 @@
 use rocket::http::{Cookie, CookieJar, Status};
 use rocket::request::{FromRequest, Request};
 
-const SESSION_COOKIE_KEY: &str = "session";
+const SESSION_COOKIE_KEY: &str = "accounts-rs";
 
 pub struct Session {}
 
@@ -31,5 +31,9 @@ impl<'r> FromRequest<'r> for Session {
 }
 
 pub fn set_session(cookies: &CookieJar<'_>, content: String) {
-    cookies.add_private(Cookie::new(SESSION_COOKIE_KEY, content));
+    cookies.add_private(
+        Cookie::build(SESSION_COOKIE_KEY, content)
+            .secure(true)
+            .finish(),
+    );
 }
