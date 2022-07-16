@@ -3,7 +3,7 @@
 #[macro_use]
 extern crate rocket;
 
-use rocket::fs::FileServer;
+use rocket::{fs::FileServer, response::Redirect, Request};
 use rocket_dyn_templates::Template;
 use sqlx::postgres::PgPoolOptions;
 use tokio::task;
@@ -51,10 +51,16 @@ async fn main() {
             ],
         )
         .mount("/api/public", FileServer::from("static/public"))
+        .register("/", catchers![unauthorized])
         .manage(pool.clone())
         .manage(config)
         .attach(Template::fairing())
         .launch()
         .await
         .expect("Rocket failed to start");
+}
+
+#[catch(401)]
+fn unauthorized(_req: &Request) -> Redirect {
+    Redirect::found("/api/login")
 }
