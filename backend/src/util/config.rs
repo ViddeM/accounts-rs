@@ -38,6 +38,7 @@ pub struct Config {
     pub send_from_email_address: String,
     pub backend_address: String,
     pub offline_mode: bool,
+    pub redis_url: String,
 }
 
 impl Config {
@@ -76,6 +77,7 @@ impl Config {
             send_from_email_address: load_env_str(String::from("SEND_FROM_EMAIL_ADDRESS"))?,
             backend_address: load_env_str(String::from("BACKEND_ADDRESS"))?,
             offline_mode: load_env_bool(String::from("OFFLINE_MODE"))?,
+            redis_url: load_env_str(String::from("REDIS_URL"))?,
         })
     }
 }

@@ -4,3 +4,4 @@ pub mod email_service;
 pub mod google_api_service;
 pub mod password_service;
 pub mod reset_password_service;
+pub mod session_service;

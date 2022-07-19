@@ -17,20 +17,43 @@ pub mod models;
 pub mod services;
 pub mod util;
 
+use mobc::Pool;
+use mobc_redis::redis;
+use mobc_redis::RedisConnectionManager;
+
+const MAX_REDIS_CONNECTONS: u64 = 20;
+
 #[rocket::main]
 async fn main() {
+    // Load
     let config = Config::new().expect("Failed to load config");
 
-    let pool = PgPoolOptions::new()
+    // Setup DB
+    let db_pool = PgPoolOptions::new()
         .max_connections(5)
         .connect(&config.database_url)
         .await
         .expect("Failed to connect to DB");
+    db::init(&db_pool).await.expect("Failed to initialize db");
 
-    db::init(&pool).await.expect("Failed to initialize db");
+    // Setup Redis cache
+    let redis_client = redis::Client::open(config.redis_url.clone()).expect(&format!(
+        "Failed to connect to redis on URL {}",
+        config.redis_url
+    ));
+    let redis_manager = RedisConnectionManager::new(redis_client);
+    let redis_pool = Pool::builder()
+        .max_open(MAX_REDIS_CONNECTONS)
+        .build(redis_manager);
 
-    let pool_clone = pool.clone();
+    // Test redis connection
+    redis_pool
+        .get()
+        .await
+        .expect("Test connection to redis pool failed");
 
+    // Setup background tasks
+    let pool_clone = db_pool.clone();
     task::spawn(background_task::run_background_tasks(pool_clone));
 
     rocket::build()
@@ -52,7 +75,8 @@ async fn main() {
         )
         .mount("/api/public", FileServer::from("static/public"))
         .register("/", catchers![unauthorized])
-        .manage(pool.clone())
+        .manage(db_pool.clone())
+        .manage(redis_pool)
         .manage(config)
         .attach(Template::fairing())
         .launch()

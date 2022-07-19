@@ -40,3 +40,16 @@ services:
     image: adminer
     ports:
       - ${ADMINER_PORT}:8080
+
+  redis:
+    image: redis:6.2
+    ports:
+      - ${REDIS_PORT}:6379
+
+
+  redis-ui:
+    image: patrikx3/p3x-redis-ui:2021.4.162
+    ports:
+      - ${REDIS_UI_PORT}:7843
+    volumes:
+      - /settings

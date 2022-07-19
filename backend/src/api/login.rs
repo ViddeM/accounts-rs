@@ -1,15 +1,15 @@
 use crate::db::login_details_repository;
 use crate::db::{new_transaction, DB};
 use crate::services::password_service;
+use crate::services::session_service::set_session;
 use crate::util::config::Config;
-use crate::util::session::set_session;
+use mobc_redis::RedisConnectionManager;
 use rocket::form::Form;
 use rocket::http::CookieJar;
 use rocket::response::content::Html;
 use rocket::response::Redirect;
 use rocket::{Either, State};
 use rocket_dyn_templates::Template;
-use sqlx::Pool;
 use std::collections::BTreeMap;
 
 const LOGIN_TEMPLATE_NAME: &str = "login";
@@ -52,10 +52,11 @@ pub async fn get_login_page() -> Html<Template> {
 
 #[post("/login", data = "<user_input>")]
 pub async fn post_login(
-    db_pool: &State<Pool<DB>>,
+    db_pool: &State<sqlx::Pool<DB>>,
     config: &State<Config>,
     user_input: Form<LoginForm>,
     cookies: &CookieJar<'_>,
+    redis_pool: &State<mobc::Pool<RedisConnectionManager>>,
 ) -> Either<Html<Template>, Redirect> {
     let mut data: BTreeMap<&str, String> = get_default_login_data();
 
@@ -82,7 +83,7 @@ pub async fn post_login(
     if !password_service::verify_password(
         user_input.password.to_owned(),
         login_details.password.to_owned(),
-        login_details.password_nonces,
+        login_details.password_nonces.to_owned(),
         config,
     ) {
         // Password incorrect
@@ -97,10 +98,11 @@ pub async fn post_login(
     }
 
     // Password correct, set session cookie
-    set_session(
-        &cookies,
-        String::from("Here is the super secret (not rly) session id"),
-    );
+
+    if let Err(e) = set_session(redis_pool, &login_details, cookies).await {
+        error!("Failed to set session for login {}", e);
+        return Either::Left(login_error(&mut data, ERR_INTERNAL));
+    }
 
     Either::Right(Redirect::to(LOGIN_SUCCESSFUL_ADDRESS))
 }
