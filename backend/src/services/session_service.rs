@@ -16,6 +16,7 @@ const SESSION_COOKIE_KEY: &str = "accounts_rs_session";
 const SESSION_ID_LENGTH: usize = 48;
 const SESSION_COOKIE_EXPIRATION_DAYS: i64 = 5;
 
+#[derive(Debug)]
 pub struct Session {
     id: String,
     expiration: DateTime<Utc>,

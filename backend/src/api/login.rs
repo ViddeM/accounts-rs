@@ -1,7 +1,7 @@
 use crate::db::login_details_repository;
 use crate::db::{new_transaction, DB};
 use crate::services::password_service;
-use crate::services::session_service::set_session;
+use crate::services::session_service::{set_session, Session};
 use crate::util::config::Config;
 use mobc_redis::RedisConnectionManager;
 use rocket::form::Form;
@@ -45,9 +45,13 @@ pub struct LoginForm {
 }
 
 #[get("/login")]
-pub async fn get_login_page() -> Html<Template> {
+pub async fn get_login_page(session: Option<Session>) -> Either<Html<Template>, Redirect> {
+    if let Some(_) = session {
+        return Either::Right(Redirect::to(LOGIN_SUCCESSFUL_ADDRESS));
+    }
+
     let data: BTreeMap<&str, String> = get_default_login_data();
-    Html(Template::render(LOGIN_TEMPLATE_NAME, &data))
+    Either::Left(Html(Template::render(LOGIN_TEMPLATE_NAME, &data)))
 }
 
 #[post("/login", data = "<user_input>")]
