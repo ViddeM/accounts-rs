@@ -152,7 +152,7 @@ impl<'r> FromRequest<'r> for Session {
         {
             Ok(Some(s)) => s,
             Ok(None) => {
-                println!("Session was not found in the cache");
+                error!("Session was not found in the cache, this should generally not happen");
                 // Delete the invalid cookie and require relogin
                 request.cookies().remove_private(session_cookie);
                 return rocket::request::Outcome::Failure((
@@ -171,7 +171,6 @@ impl<'r> FromRequest<'r> for Session {
 
         let now = Utc::now();
         if session.expiration < now {
-            println!("Session expired");
             // Session has expired, remove it from redis and cookie
             if let Err(e) = redis_conn.del::<String, ()>(session_id.to_string()).await {
                 error!(
