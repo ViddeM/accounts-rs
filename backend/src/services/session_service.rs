@@ -1,5 +1,3 @@
-use std::collections::BTreeMap;
-
 use chrono::{DateTime, Duration, Utc};
 use mobc_redis::redis::{AsyncCommands, FromRedisValue, ToRedisArgs};
 use mobc_redis::RedisConnectionManager;
@@ -111,15 +109,16 @@ impl<'r> FromRequest<'r> for Session {
     type Error = SessionError;
 
     async fn from_request(request: &'r Request<'_>) -> rocket::request::Outcome<Self, Self::Error> {
-        let session_id = match request.cookies().get_private(SESSION_COOKIE_KEY) {
-            Some(s) => String::from(s.value()),
+        let session_cookie = match request.cookies().get_private(SESSION_COOKIE_KEY) {
+            Some(s) => s,
             None => {
                 return rocket::request::Outcome::Failure((
                     Status::Unauthorized,
                     SessionError::MissingCookie,
-                ))
+                ));
             }
         };
+        let session_id = String::from(session_cookie.value());
 
         let redis_pool = match request
             .guard::<&State<mobc::Pool<RedisConnectionManager>>>()
@@ -148,10 +147,19 @@ impl<'r> FromRequest<'r> for Session {
         };
 
         let session = match redis_conn
-            .get::<String, Session>(session_id.to_string())
+            .get::<String, Option<Session>>(session_id.to_string())
             .await
         {
-            Ok(s) => s,
+            Ok(Some(s)) => s,
+            Ok(None) => {
+                println!("Session was not found in the cache");
+                // Delete the invalid cookie and require relogin
+                request.cookies().remove_private(session_cookie);
+                return rocket::request::Outcome::Failure((
+                    Status::Unauthorized,
+                    SessionError::MissingCookie,
+                ));
+            }
             Err(err) => {
                 error!("Failed to retrieve session from redis, err: {}", err);
                 return rocket::request::Outcome::Failure((
@@ -160,6 +168,28 @@ impl<'r> FromRequest<'r> for Session {
                 ));
             }
         };
+
+        let now = Utc::now();
+        if session.expiration < now {
+            println!("Session expired");
+            // Session has expired, remove it from redis and cookie
+            if let Err(e) = redis_conn.del::<String, ()>(session_id.to_string()).await {
+                error!(
+                    "Failed to delete expired session (id = {})from redis, err: {}",
+                    session_id, e
+                );
+                return rocket::request::Outcome::Failure((
+                    Status::InternalServerError,
+                    SessionError::RedisPoolError,
+                ));
+            }
+            request.cookies().remove_private(session_cookie);
+
+            return rocket::request::Outcome::Failure((
+                Status::Unauthorized,
+                SessionError::MissingCookie,
+            ));
+        }
 
         rocket::request::Outcome::Success(session)
     }
