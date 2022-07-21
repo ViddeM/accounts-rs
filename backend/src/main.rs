@@ -71,6 +71,7 @@ async fn main() {
                 api::password_reset::post_forgot_password,
                 api::password_reset::get_reset_password,
                 api::password_reset::post_reset_password,
+                api::logout::post_logout,
             ],
         )
         .mount("/api/public", FileServer::from("static/public"))
@@ -86,5 +87,5 @@ async fn main() {
 
 #[catch(401)]
 fn unauthorized(_req: &Request) -> Redirect {
-    Redirect::found("/api/login")
+    Redirect::to("/api/login")
 }
