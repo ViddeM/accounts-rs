@@ -16,9 +16,9 @@ const SESSION_COOKIE_EXPIRATION_DAYS: i64 = 5;
 
 #[derive(Debug)]
 pub struct Session {
-    id: String,
-    expiration: DateTime<Utc>,
-    user_id: Uuid,
+    pub id: String,
+    pub expiration: DateTime<Utc>,
+    pub user_id: Uuid,
 }
 
 impl ToRedisArgs for Session {
@@ -102,6 +102,8 @@ pub enum SessionError {
     ExpirationTimeGeneration,
     #[error("Failed to insert session into the redis cache")]
     CacheInsertion,
+    #[error("Failed to delete session from cache")]
+    SessionDeletion,
 }
 
 #[rocket::async_trait]
@@ -147,14 +149,14 @@ impl<'r> FromRequest<'r> for Session {
         };
 
         let session = match redis_conn
-            .get::<String, Option<Session>>(session_id.to_string())
+            .get::<String, Option<Session>>(session_id.clone())
             .await
         {
             Ok(Some(s)) => s,
             Ok(None) => {
                 error!("Session was not found in the cache, this should generally not happen");
-                // Delete the invalid cookie and require relogin
-                request.cookies().remove_private(session_cookie);
+                // Delete the invalid cookie and require re-login
+                delete_session_cookie(request.cookies()).await;
                 return rocket::request::Outcome::Failure((
                     Status::Unauthorized,
                     SessionError::MissingCookie,
@@ -172,9 +174,9 @@ impl<'r> FromRequest<'r> for Session {
         let now = Utc::now();
         if session.expiration < now {
             // Session has expired, remove it from redis and cookie
-            if let Err(e) = redis_conn.del::<String, ()>(session_id.to_string()).await {
+            if let Err(e) = delete_session_from_cache(&mut redis_conn, session_id.clone()).await {
                 error!(
-                    "Failed to delete expired session (id = {})from redis, err: {}",
+                    "Failed to delete expired session (id = {}) from redis, err: {}",
                     session_id, e
                 );
                 return rocket::request::Outcome::Failure((
@@ -182,7 +184,8 @@ impl<'r> FromRequest<'r> for Session {
                     SessionError::RedisPoolError,
                 ));
             }
-            request.cookies().remove_private(session_cookie);
+
+            delete_session_cookie(request.cookies()).await;
 
             return rocket::request::Outcome::Failure((
                 Status::Unauthorized,
@@ -235,4 +238,21 @@ pub async fn set_session(
     );
 
     Ok(())
+}
+
+pub async fn delete_session_from_cache(
+    redis_conn: &mut mobc::Connection<RedisConnectionManager>,
+    session_id: String,
+) -> Result<(), SessionError> {
+    redis_conn
+        .del::<String, ()>(session_id)
+        .await
+        .or(Err(SessionError::SessionDeletion))
+}
+
+pub async fn delete_session_cookie<'r>(cookie_jar: &CookieJar<'r>) {
+    if let Some(cookie) = cookie_jar.get_private(SESSION_COOKIE_KEY) {
+        cookie_jar.remove_private(cookie);
+    }
+    // If the result is none then the cookie doesn't exist and we are all good
 }
