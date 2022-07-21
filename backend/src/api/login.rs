@@ -1,7 +1,7 @@
-use crate::db::login_details_repository;
-use crate::db::{new_transaction, DB};
-use crate::services::password_service;
+use crate::db::DB;
+use crate::services::login_service::LoginError;
 use crate::services::session_service::{set_session, Session};
+use crate::services::{login_service, password_service};
 use crate::util::config::Config;
 use mobc_redis::RedisConnectionManager;
 use rocket::form::Form;
@@ -16,13 +16,15 @@ const LOGIN_TEMPLATE_NAME: &str = "login";
 
 const ERROR_KEY: &str = "error";
 
-const ERR_INVALID_EMAIL_OR_PASSWORD: &str = "Invalid email or password";
+const ERR_INVALID_EMAIL_OR_PASSWORD: &str =
+    "Invalid email or password or the account has been locked due to excessive incorrect passwords";
 const ERR_ACCOUNT_NOT_ACTIVATED: &str = "The account has not yet been activated";
 const ERR_INTERNAL: &str = "An internal error occurred";
 
 const MIN_PASSWORD_LEN_KEY: &str = "min_password_len";
 const MAX_PASSWORD_LEN_KEY: &str = "max_password_len";
 const LOGIN_SUCCESSFUL_ADDRESS: &str = "/api/login_successful";
+const EMAIL_KEY: &str = "email";
 
 fn get_default_login_data() -> BTreeMap<&'static str, String> {
     let mut data: BTreeMap<&str, String> = BTreeMap::new();
@@ -64,44 +66,27 @@ pub async fn post_login(
 ) -> Either<Html<Template>, Redirect> {
     let mut data: BTreeMap<&str, String> = get_default_login_data();
 
-    let mut transaction = match new_transaction(db_pool).await {
-        Ok(trans) => trans,
-        Err(_) => {
-            return Either::Left(login_error(&mut data, ERR_INTERNAL));
+    let login_details = match login_service::validate_login(
+        config,
+        db_pool,
+        user_input.email.clone(),
+        user_input.password.clone(),
+    )
+    .await
+    {
+        Ok(s) => s,
+        Err(e) => {
+            let err = match e {
+                LoginError::Internal => ERR_INTERNAL,
+                LoginError::InvalidEmailPassword => ERR_INVALID_EMAIL_OR_PASSWORD,
+                LoginError::AccountLocked => ERR_INVALID_EMAIL_OR_PASSWORD,
+                LoginError::AccountNotActivated => ERR_ACCOUNT_NOT_ACTIVATED,
+            };
+
+            data.insert(EMAIL_KEY, user_input.email.clone());
+            return Either::Left(login_error(&mut data, err));
         }
     };
-
-    let login_details =
-        match login_details_repository::get_by_email(&mut transaction, &user_input.email).await {
-            Err(err) => {
-                error!("Failed communcating with DB: {:?}", err);
-                return Either::Left(login_error(&mut data, ERR_INTERNAL));
-            }
-            Ok(Some(login_details)) => login_details,
-            Ok(None) => {
-                // No account exists with the given email.
-                return Either::Left(login_error(&mut data, ERR_INVALID_EMAIL_OR_PASSWORD));
-            }
-        };
-
-    if !password_service::verify_password(
-        user_input.password.to_owned(),
-        login_details.password.to_owned(),
-        login_details.password_nonces.to_owned(),
-        config,
-    ) {
-        // Password incorrect
-        return Either::Left(login_error(&mut data, ERR_INVALID_EMAIL_OR_PASSWORD));
-    }
-
-    // If we reach here, we now accept the user as authorized with the account
-
-    if !login_details.activated {
-        // The account has not yet been activated
-        return Either::Left(login_error(&mut data, ERR_ACCOUNT_NOT_ACTIVATED));
-    }
-
-    // Password correct, set session cookie
 
     if let Err(e) = set_session(redis_pool, &login_details, cookies).await {
         error!("Failed to set session for login {}", e);

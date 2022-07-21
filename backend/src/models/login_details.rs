@@ -7,7 +7,9 @@ pub struct LoginDetails {
     pub email: String,
     pub password: String,
     pub password_nonces: String,
-    pub activated: bool,
+    pub activated_at: Option<DateTime<Utc>>,
     pub created_at: DateTime<Utc>,
     pub modified_at: DateTime<Utc>,
+    pub incorrect_password_count: i32,
+    pub account_locked_until: Option<DateTime<Utc>>,
 }

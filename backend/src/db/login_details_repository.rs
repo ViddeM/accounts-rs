@@ -2,6 +2,7 @@ use crate::db::DB;
 use crate::models::account::Account;
 use crate::models::login_details::LoginDetails;
 use crate::util::accounts_error::AccountsResult;
+use chrono::{DateTime, Utc};
 use sqlx::Transaction;
 use uuid::Uuid;
 
@@ -32,9 +33,9 @@ pub async fn create_unactivated_account(
     Ok(sqlx::query_as!(
         LoginDetails,
         "
-INSERT INTO login_details (account_id, email, password, password_nonces, activated)
-VALUES                    ($1,         $2,    $3,       $4,              false)
-RETURNING account_id, email, password, password_nonces, created_at, modified_at, activated
+INSERT INTO login_details (account_id, email, password, password_nonces, activated_at, incorrect_password_count, account_locked_until)
+VALUES                    ($1,         $2,    $3,       $4,              NULL,         0,                        NULL)
+RETURNING account_id, email, password, password_nonces, created_at, modified_at, activated_at, incorrect_password_count, account_locked_until
         ",
         account.id,
         email,
@@ -59,7 +60,7 @@ SET password        = $1,
     password_nonces = $2,
     modified_at     = NOW()
 WHERE account_id=$3
-RETURNING account_id, email, password, password_nonces, created_at, modified_at, activated
+RETURNING account_id, email, password, password_nonces, created_at, modified_at, activated_at, incorrect_password_count, account_locked_until
     ",
         new_password,
         new_password_nonces,
@@ -96,10 +97,35 @@ pub async fn activate_account(
         "
 UPDATE login_details
 SET 
-    activated = true,
+    activated_at = NOW(),
     modified_at = NOW()
 WHERE account_id = $1
         ",
+        account_id
+    )
+    .execute(transaction)
+    .await?;
+    Ok(())
+}
+
+pub async fn set_account_lockout(
+    transaction: &mut Transaction<'_, DB>,
+    account_id: Uuid,
+    invalid_password_count: i32,
+    account_locked_until: Option<DateTime<Utc>>,
+) -> AccountsResult<()> {
+    sqlx::query_as!(
+        LoginDetails,
+        "
+UPDATE login_details
+SET
+    incorrect_password_count=$1,
+    account_locked_until=$2,
+    modified_at=NOW()
+WHERE account_id=$3
+",
+        invalid_password_count,
+        account_locked_until,
         account_id
     )
     .execute(transaction)
