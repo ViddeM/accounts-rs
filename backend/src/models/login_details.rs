@@ -1,5 +1,5 @@
 use sqlx::types::chrono::{DateTime, Utc};
-use uuid::Uuid;
+use sqlx::types::uuid::Uuid;
 
 #[derive(Debug, Clone, sqlx::FromRow)]
 pub struct LoginDetails {

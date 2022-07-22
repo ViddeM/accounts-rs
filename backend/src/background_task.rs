@@ -3,10 +3,10 @@ use crate::db::{
     reset_password_repository, DB,
 };
 use crate::util::accounts_error::AccountsResult;
+use sqlx::types::uuid::Uuid;
 use sqlx::Pool;
 use std::time::Duration;
 use tokio::time;
-use uuid::Uuid;
 
 // 30 minutes
 const SECONDS_BETWEEN_TASKS: u64 = 60 * 30;

@@ -1,8 +1,8 @@
 use crate::db::DB;
 use crate::models::account::Account;
 use crate::util::accounts_error::AccountsResult;
+use sqlx::types::uuid::Uuid;
 use sqlx::Transaction;
-use uuid::Uuid;
 
 pub async fn insert(
     transaction: &mut Transaction<'_, DB>,

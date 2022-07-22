@@ -1,8 +1,8 @@
 use crate::db::{activation_code_repository, login_details_repository, new_transaction, DB};
 use crate::util::accounts_error::AccountsError;
 use rocket::State;
+use sqlx::types::uuid::Uuid;
 use sqlx::Pool;
-use uuid::Uuid;
 
 pub enum ActivateAccountError {
     Internal,           // An internal error occurred

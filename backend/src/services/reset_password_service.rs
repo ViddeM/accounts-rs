@@ -1,7 +1,7 @@
 use chrono::Utc;
 use rocket::State;
+use sqlx::types::uuid::Uuid;
 use sqlx::Pool;
-use uuid::Uuid;
 
 use crate::{
     db::{login_details_repository, new_transaction, reset_password_repository, DB},

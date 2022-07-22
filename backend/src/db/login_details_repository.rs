@@ -3,8 +3,8 @@ use crate::models::account::Account;
 use crate::models::login_details::LoginDetails;
 use crate::util::accounts_error::AccountsResult;
 use chrono::{DateTime, Utc};
+use sqlx::types::uuid::Uuid;
 use sqlx::Transaction;
-use uuid::Uuid;
 
 pub async fn get_by_email(
     transaction: &mut Transaction<'_, DB>,

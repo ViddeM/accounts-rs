@@ -23,8 +23,8 @@ use mobc_redis::RedisConnectionManager;
 
 const MAX_REDIS_CONNECTONS: u64 = 20;
 
-#[rocket::main]
-async fn main() {
+#[launch]
+async fn rocket() -> _ {
     // Load
     let config = Config::new().expect("Failed to load config");
 
@@ -80,9 +80,6 @@ async fn main() {
         .manage(redis_pool)
         .manage(config)
         .attach(Template::fairing())
-        .launch()
-        .await
-        .expect("Rocket failed to start");
 }
 
 #[catch(401)]

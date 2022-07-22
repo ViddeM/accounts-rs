@@ -1,13 +1,9 @@
 use std::collections::BTreeMap;
 
-use rocket::{
-    form::Form,
-    response::{content::Html, Redirect},
-    Either, State,
-};
+use rocket::{form::Form, response::Redirect, Either, State};
 use rocket_dyn_templates::Template;
+use sqlx::types::uuid::Uuid;
 use sqlx::Pool;
-use uuid::Uuid;
 
 use crate::{
     db::DB,
@@ -34,9 +30,9 @@ const PASSWORD_RESET_SUCCESSFUL: &str =
 const ERR_INTERNAL: &str = "An internal error has occured, please contact the page admin";
 
 #[get("/forgot_password")]
-pub async fn get_forgot_password() -> Html<Template> {
+pub async fn get_forgot_password() -> Template {
     let data: BTreeMap<&str, String> = BTreeMap::new();
-    Html(Template::render(FORGOT_PASSWORD_TEMPLATE_NAME, &data))
+    Template::render(FORGOT_PASSWORD_TEMPLATE_NAME, &data)
 }
 
 #[derive(FromForm)]
@@ -49,7 +45,7 @@ pub async fn post_forgot_password(
     config: &State<Config>,
     db_pool: &State<Pool<DB>>,
     forgot_password: Form<ForgotPasswordForm>,
-) -> Either<Html<Template>, Redirect> {
+) -> Either<Template, Redirect> {
     if let Err(e) = reset_password_service::initiate_password_reset(
         config,
         db_pool,
@@ -64,7 +60,7 @@ pub async fn post_forgot_password(
         let mut data: BTreeMap<&str, &str> = BTreeMap::new();
         data.insert(EMAIL_KEY, &forgot_password.email);
         data.insert(ERROR_KEY, ERR_INTERNAL);
-        return Either::Left(Html(Template::render(FORGOT_PASSWORD_TEMPLATE_NAME, &data)));
+        return Either::Left(Template::render(FORGOT_PASSWORD_TEMPLATE_NAME, &data));
     }
 
     Either::Right(Redirect::to(format!(
@@ -78,7 +74,7 @@ pub async fn get_reset_password(
     s: Option<String>,
     email: Option<String>,
     code: Option<String>,
-) -> Html<Template> {
+) -> Template {
     let mut data = get_default_password_page_data();
 
     if let Some(state) = s {
@@ -90,7 +86,7 @@ pub async fn get_reset_password(
     data.insert(EMAIL_KEY, email.unwrap_or(String::new()));
     data.insert(CODE_KEY, code.unwrap_or(String::new()));
 
-    Html(Template::render(RESET_PASSWORD_TEMPLATE_NAME, &data))
+    Template::render(RESET_PASSWORD_TEMPLATE_NAME, &data)
 }
 
 #[derive(FromForm)]
@@ -106,7 +102,7 @@ pub async fn post_reset_password(
     config: &State<Config>,
     db_pool: &State<Pool<DB>>,
     reset_password: Form<PasswordResetForm>,
-) -> Html<Template> {
+) -> Template {
     let mut data = get_default_password_page_data();
 
     data.insert(EMAIL_KEY, reset_password.email.clone());
@@ -116,7 +112,7 @@ pub async fn post_reset_password(
         Err(err) => {
             error!("Failed to parse password reset code to uuid, err: {}", err);
             data.insert(ERROR_KEY, INVALID_EMAIL_OR_CODE.to_string());
-            return Html(Template::render(RESET_PASSWORD_TEMPLATE_NAME, &data));
+            return Template::render(RESET_PASSWORD_TEMPLATE_NAME, &data);
         }
         Ok(val) => val,
     };
@@ -126,7 +122,7 @@ pub async fn post_reset_password(
         &reset_password.new_password_repeat,
     ) {
         data.insert(ERROR_KEY, e.to_string());
-        return Html(Template::render(RESET_PASSWORD_TEMPLATE_NAME, &data));
+        return Template::render(RESET_PASSWORD_TEMPLATE_NAME, &data);
     }
 
     if let Err(e) = reset_password_service::update_password(
@@ -139,11 +135,11 @@ pub async fn post_reset_password(
     .await
     {
         data.insert(ERROR_KEY, e.to_api_err().to_string());
-        return Html(Template::render(RESET_PASSWORD_TEMPLATE_NAME, &data));
+        return Template::render(RESET_PASSWORD_TEMPLATE_NAME, &data);
     }
 
     data.insert(INFO_KEY, PASSWORD_RESET_SUCCESSFUL.to_string());
-    Html(Template::render(RESET_PASSWORD_TEMPLATE_NAME, &data))
+    Template::render(RESET_PASSWORD_TEMPLATE_NAME, &data)
 }
 
 impl ResetPasswordError {

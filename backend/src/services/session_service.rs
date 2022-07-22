@@ -6,7 +6,7 @@ use rand::{thread_rng, Rng};
 use rocket::http::{Cookie, CookieJar, Status};
 use rocket::request::{FromRequest, Request};
 use rocket::State;
-use uuid::Uuid;
+use sqlx::types::uuid::Uuid;
 
 use crate::models::login_details::LoginDetails;
 

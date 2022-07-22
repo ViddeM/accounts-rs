@@ -1,5 +1,5 @@
+use sqlx::types::uuid::Uuid;
 use sqlx::Transaction;
-use uuid::Uuid;
 
 use crate::db::DB;
 use crate::models::password_reset::PasswordReset;

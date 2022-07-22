@@ -1,7 +1,6 @@
 use crate::services::create_account_service;
 use crate::util::config::Config;
 use rocket::form::Form;
-use rocket::response::content::Html;
 
 use rocket::State;
 use rocket_dyn_templates::Template;
@@ -29,15 +28,15 @@ const INFO_EMAIL_HAS_BEEN_SENT: &str = "Your account has been created but has ye
 
 const CREATE_ACCOUNT_TEMPLATE_NAME: &str = "create-account";
 
-fn create_account_error(data: &mut BTreeMap<&str, String>, error: &str) -> Html<Template> {
+fn create_account_error(data: &mut BTreeMap<&str, String>, error: &str) -> Template {
     data.insert(ERROR_KEY, error.to_string());
-    Html(Template::render(CREATE_ACCOUNT_TEMPLATE_NAME, &data))
+    Template::render(CREATE_ACCOUNT_TEMPLATE_NAME, &data)
 }
 
 #[get("/create_account")]
-pub async fn get_create_account() -> Html<Template> {
+pub async fn get_create_account() -> Template {
     let data = get_default_password_page_data();
-    Html(Template::render(CREATE_ACCOUNT_TEMPLATE_NAME, data))
+    Template::render(CREATE_ACCOUNT_TEMPLATE_NAME, data)
 }
 
 #[derive(FromForm)]
@@ -54,7 +53,7 @@ pub async fn create_account(
     config: &State<Config>,
     db_pool: &State<Pool<DB>>,
     create_account: Form<CreateAccountForm>,
-) -> Html<Template> {
+) -> Template {
     let mut data = get_default_password_page_data();
 
     data.insert(FIRST_NAME_KEY, create_account.first_name.to_string());
@@ -81,7 +80,7 @@ pub async fn create_account(
     };
 
     data.insert(INFO_KEY, INFO_EMAIL_HAS_BEEN_SENT.to_string());
-    return Html(Template::render(CREATE_ACCOUNT_TEMPLATE_NAME, &data));
+    return Template::render(CREATE_ACCOUNT_TEMPLATE_NAME, &data);
 }
 
 impl CreateAccountError {

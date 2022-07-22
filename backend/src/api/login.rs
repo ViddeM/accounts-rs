@@ -6,7 +6,6 @@ use crate::util::config::Config;
 use mobc_redis::RedisConnectionManager;
 use rocket::form::Form;
 use rocket::http::CookieJar;
-use rocket::response::content::Html;
 use rocket::response::Redirect;
 use rocket::{Either, State};
 use rocket_dyn_templates::Template;
@@ -35,9 +34,9 @@ fn get_default_login_data() -> BTreeMap<&'static str, String> {
     data
 }
 
-fn login_error(data: &mut BTreeMap<&str, String>, error: &str) -> Html<Template> {
+fn login_error(data: &mut BTreeMap<&str, String>, error: &str) -> Template {
     data.insert(ERROR_KEY, error.to_string());
-    Html(Template::render(LOGIN_TEMPLATE_NAME, &data))
+    Template::render(LOGIN_TEMPLATE_NAME, &data)
 }
 
 #[derive(FromForm)]
@@ -47,13 +46,13 @@ pub struct LoginForm {
 }
 
 #[get("/login")]
-pub async fn get_login_page(session: Option<Session>) -> Either<Html<Template>, Redirect> {
+pub async fn get_login_page(session: Option<Session>) -> Either<Template, Redirect> {
     if let Some(_) = session {
         return Either::Right(Redirect::to(LOGIN_SUCCESSFUL_ADDRESS));
     }
 
     let data: BTreeMap<&str, String> = get_default_login_data();
-    Either::Left(Html(Template::render(LOGIN_TEMPLATE_NAME, &data)))
+    Either::Left(Template::render(LOGIN_TEMPLATE_NAME, &data))
 }
 
 #[post("/login", data = "<user_input>")]
@@ -63,7 +62,7 @@ pub async fn post_login(
     user_input: Form<LoginForm>,
     cookies: &CookieJar<'_>,
     redis_pool: &State<mobc::Pool<RedisConnectionManager>>,
-) -> Either<Html<Template>, Redirect> {
+) -> Either<Template, Redirect> {
     let mut data: BTreeMap<&str, String> = get_default_login_data();
 
     let login_details = match login_service::validate_login(
