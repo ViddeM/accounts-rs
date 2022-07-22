@@ -1,5 +1,6 @@
 use crate::db::DB;
 use crate::models::account::Account;
+use crate::models::authority::AuthorityLevel;
 use crate::util::accounts_error::AccountsResult;
 use sqlx::types::uuid::Uuid;
 use sqlx::Transaction;
@@ -11,11 +12,11 @@ pub async fn insert(
 ) -> AccountsResult<Account> {
     Ok(sqlx::query_as!(
         Account,
-        "
+        r#"
 INSERT INTO account (first_name, last_name)
 VALUES              ($1,         $2       )
-RETURNING id, first_name, last_name, created_at, modified_at
-        ",
+RETURNING id, first_name, last_name, created_at, modified_at, authority as "authority: _" 
+        "#,
         first_name,
         last_name,
     )
@@ -39,4 +40,22 @@ WHERE id = ANY($1)
     .execute(transaction)
     .await?;
     Ok(())
+}
+
+pub async fn get_admin_account(
+    transaction: &mut Transaction<'_, DB>,
+    account_id: Uuid,
+) -> AccountsResult<Option<Account>> {
+    Ok(sqlx::query_as!(
+        Account,
+        r#"
+SELECT id, first_name, last_name, created_at, modified_at, authority AS "authority: _"
+FROM account
+WHERE id = $1 AND authority = $2
+        "#,
+        account_id,
+        AuthorityLevel::Admin as _
+    )
+    .fetch_optional(transaction)
+    .await?)
 }

@@ -74,8 +74,9 @@ async fn rocket() -> _ {
                 api::logout::post_logout,
             ],
         )
+        .mount("/api/admin", routes![api::admin_view::get_admin_view,])
         .mount("/api/public", FileServer::from("static/public"))
-        .register("/", catchers![unauthorized])
+        .register("/", catchers![unauthorized, forbidden])
         .manage(db_pool.clone())
         .manage(redis_pool)
         .manage(config)
@@ -85,4 +86,11 @@ async fn rocket() -> _ {
 #[catch(401)]
 fn unauthorized(_req: &Request) -> Redirect {
     Redirect::to("/api/login")
+}
+
+const FORBIDDEN_TEMPLATE_NAME: &str = "forbidden-handler";
+
+#[catch(403)]
+fn forbidden(_req: &Request) -> Template {
+    Template::render(FORBIDDEN_TEMPLATE_NAME, ())
 }

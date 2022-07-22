@@ -1,5 +1,6 @@
 pub mod account;
 pub mod activation_code;
+pub mod authority;
 pub mod login_details;
 pub mod login_provider;
 pub mod password_reset;

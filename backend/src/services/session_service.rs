@@ -18,7 +18,7 @@ const SESSION_COOKIE_EXPIRATION_DAYS: i64 = 5;
 pub struct Session {
     pub id: String,
     pub expiration: DateTime<Utc>,
-    pub user_id: Uuid,
+    pub account_id: Uuid,
 }
 
 impl ToRedisArgs for Session {
@@ -27,10 +27,10 @@ impl ToRedisArgs for Session {
         W: ?Sized + mobc_redis::redis::RedisWrite,
     {
         let data = format!(
-            "ID={}::EXPIRATION={}::USER_ID={}",
+            "ID={}::EXPIRATION={}::ACCOUNT_ID={}",
             self.id,
             self.expiration.to_string(),
-            self.user_id
+            self.account_id
         );
 
         out.write_arg(data.as_bytes());
@@ -60,7 +60,7 @@ impl FromRedisValue for Session {
 
         let mut id: Option<String> = None;
         let mut expiration: Option<DateTime<Utc>> = None;
-        let mut user_id: Option<Uuid> = None;
+        let mut account_id: Option<Uuid> = None;
         for (k, v) in vals.into_iter() {
             match k.as_str() {
                 "ID" => {
@@ -73,8 +73,8 @@ impl FromRedisValue for Session {
                         .ok_or(invalid_type_error!("DateTime<Utc>", v))?;
                     expiration = Some(expiration_date);
                 }
-                "USER_ID" => {
-                    user_id = Some(
+                "ACCOUNT_ID" => {
+                    account_id = Some(
                         Uuid::parse_str(&v)
                             .ok()
                             .ok_or(invalid_type_error!("Uuid", v))?,
@@ -87,7 +87,7 @@ impl FromRedisValue for Session {
         Ok(Session {
             id: id.expect("Failed to retrieve ID for session from cache"),
             expiration: expiration.expect("Failed to retrieve expiration for session from cache"),
-            user_id: user_id.expect("Failed to retrieve user_id for session from cache"),
+            account_id: account_id.expect("Failed to retrieve account_id for session from cache"),
         })
     }
 }
@@ -220,7 +220,7 @@ pub async fn set_session(
     let session = Session {
         id: session_id.clone(),
         expiration: expiration_time,
-        user_id: login_details.account_id,
+        account_id: login_details.account_id,
     };
 
     redis_conn
