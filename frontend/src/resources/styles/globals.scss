@@ -1,0 +1,29 @@
+@import "vars";
+
+html {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: $font;
+}
+
+* {
+  box-sizing: border-box;
+  font-family: $secondary-font;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: $gray-color;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: $font;
+  margin: 0;
+}
