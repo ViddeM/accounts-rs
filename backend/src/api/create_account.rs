@@ -18,7 +18,6 @@ const FIRST_NAME_KEY: &str = "first_name";
 const LAST_NAME_KEY: &str = "last_name";
 const EMAIL_KEY: &str = "email";
 
-const ERR_EMAIL_IN_USE: &str = "That email is already in use";
 const ERR_EMAIL_NOT_WHITELISTED: &str = "The provided email is not in the whitelist";
 const ERR_INTERNAL: &str = "An internal error has occured, please try again later";
 
@@ -76,19 +75,20 @@ pub async fn create_account(
     )
     .await
     {
-        return create_account_error(&mut data, e.to_api_err());
+        match e {
+            CreateAccountError::Internal | CreateAccountError::EmailError(_) => {
+                return create_account_error(&mut data, ERR_INTERNAL)
+            }
+            CreateAccountError::EmailNotWhitelisted => {
+                return create_account_error(&mut data, ERR_INTERNAL)
+            }
+            CreateAccountError::EmailInUse => {
+                data.insert(INFO_KEY, INFO_EMAIL_HAS_BEEN_SENT.to_string());
+                return Template::render(CREATE_ACCOUNT_TEMPLATE_NAME, &data);
+            }
+        }
     };
 
     data.insert(INFO_KEY, INFO_EMAIL_HAS_BEEN_SENT.to_string());
     return Template::render(CREATE_ACCOUNT_TEMPLATE_NAME, &data);
-}
-
-impl CreateAccountError {
-    fn to_api_err<'a>(&self) -> &'a str {
-        match self {
-            CreateAccountError::Internal | CreateAccountError::EmailError(_) => ERR_INTERNAL,
-            CreateAccountError::EmailInUse => ERR_EMAIL_IN_USE,
-            CreateAccountError::EmailNotWhitelisted => ERR_EMAIL_NOT_WHITELISTED,
-        }
-    }
 }
