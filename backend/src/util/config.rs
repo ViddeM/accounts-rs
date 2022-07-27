@@ -8,9 +8,9 @@ use std::{env, fs, io};
 
 #[derive(Debug, thiserror::Error)]
 pub enum ConfigError {
-    #[error("Environment variable error")]
-    EnvVarError(#[from] VarError),
-    #[error("Empty variable error")]
+    #[error("Environment variable error `{0}` for key: `{1}`")]
+    EnvVarError(VarError, String),
+    #[error("Empty variable error `{0}`")]
     VarEmpty(String),
     #[error("Serde json error")]
     SerdeJsonError(#[from] serde_json::Error),
@@ -77,7 +77,7 @@ impl Config {
 }
 
 fn load_env_str(key: String) -> ConfigResult<String> {
-    let var = env::var(&key)?;
+    let var = env::var(&key).or_else(|err| Err(ConfigError::EnvVarError(err, key.clone())))?;
 
     if var.is_empty() {
         return Err(ConfigError::VarEmpty(key));
