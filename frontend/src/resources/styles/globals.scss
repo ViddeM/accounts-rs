@@ -27,3 +27,13 @@ h6 {
   font-family: $font;
   margin: 0;
 }
+
+a {
+  color: $link-color;
+  text-decoration: none;
+  font-weight: bold;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}

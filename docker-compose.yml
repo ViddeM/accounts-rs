@@ -20,12 +20,14 @@ services:
       context: frontend
       dockerfile: dev.Dockerfile
     environment:
-      BACKEND_ADDRESS: http://backend:8000
+      BACKEND_ADDRESS: http://localhost:8000
     ports:
       - ${FRONTEND_PORT}:3000
     volumes:
       - ./frontend:/app
       - /app/node_modules
+    extra_hosts:
+      host.docker.internal: host-gateway
 
   db:
     image: postgres:13.2

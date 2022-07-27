@@ -72,6 +72,7 @@ async fn rocket() -> _ {
                 api::password_reset::get_reset_password,
                 api::password_reset::post_reset_password,
                 api::logout::post_logout,
+                api::me::get_me,
             ],
         )
         .mount("/api/admin", routes![api::admin_view::get_admin_view,])

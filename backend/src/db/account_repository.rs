@@ -59,3 +59,20 @@ WHERE id = $1 AND authority = $2
     .fetch_optional(transaction)
     .await?)
 }
+
+pub async fn get_account(
+    transaction: &mut Transaction<'_, DB>,
+    account_id: Uuid,
+) -> AccountsResult<Option<Account>> {
+    Ok(sqlx::query_as!(
+        Account,
+        r#"
+SELECT id, first_name, last_name, created_at, modified_at, authority AS "authority: _"
+FROM account
+WHERE id = $1
+        "#,
+        account_id
+    )
+    .fetch_optional(transaction)
+    .await?)
+}

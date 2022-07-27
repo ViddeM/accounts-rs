@@ -119,14 +119,18 @@ pub async fn create_account(
     let email_content = format_email_content(config, &unactivated_account, &activation_code);
 
     // Send email to the email address for confirmation
-    email_service::send_email(
+    if let Err(e) = email_service::send_email(
         &unactivated_account.email,
         "Activate your accounts-rs account",
         // TODO: Make the activation time configurable so that it is correct.
         &email_content,
         config,
     )
-    .await?;
+    .await
+    {
+        error!("Failed to send email, err: {}", e);
+        return Err(CreateAccountError::Internal);
+    }
 
     transaction.commit().await?;
     Ok(())

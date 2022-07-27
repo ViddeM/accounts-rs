@@ -9,4 +9,22 @@ $gray-color: lightgray;
 $primary-font-color: white;
 $secondary-font-color: black;
 
+$link-color: white;
+
 $border-color: rgba(0, 0, 0, 0.3);
+
+$space-big: 1.5rem;
+$space: 1rem;
+$space-small: 0.5rem;
+
+$space-big: 2rem; // 32px
+$space: 1rem; // 16px
+$space-small: 0.5rem; // 8px
+$space-tiny: 0.25rem; // 4px
+
+$border-radius: 4px;
+
+$breakpoint-mobile: 600px;
+$breakpoint-tablet: 900px;
+$breakpoint-desktop: 1200px;
+$breakpoint-large-desktop: 1800px;
