@@ -3,6 +3,12 @@
 #[macro_use]
 extern crate rocket;
 
+use ::serde::Serialize;
+use api::response::{AccountsResponse, ApiError};
+use rocket::response::status::{self, Unauthorized};
+use rocket::response::Responder;
+use rocket::serde;
+use rocket::serde::json::Json;
 use rocket::{fs::FileServer, response::Redirect, Request};
 use rocket_dyn_templates::Template;
 use sqlx::postgres::PgPoolOptions;
@@ -84,9 +90,19 @@ async fn rocket() -> _ {
         .attach(Template::fairing())
 }
 
+struct UnauthorizedResponse(Json<AccountsResponse<()>>);
+
+impl<'r> Responder<'r, 'r> for UnauthorizedResponse {
+    fn respond_to(self, req: &'r Request<'_>) -> rocket::response::Result<'r> {
+        rocket::Response::build_from(self.0.respond_to(req)?)
+            .raw_header("location", "/api/login")
+            .ok()
+    }
+}
+
 #[catch(401)]
-fn unauthorized(_req: &Request) -> Redirect {
-    Redirect::to("/api/login")
+fn unauthorized() -> UnauthorizedResponse {
+    UnauthorizedResponse(Json(AccountsResponse::error(ApiError::Unauthorized)))
 }
 
 const FORBIDDEN_TEMPLATE_NAME: &str = "forbidden-handler";

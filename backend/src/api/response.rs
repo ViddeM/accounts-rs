@@ -1,6 +1,7 @@
 use serde::Serialize;
 
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 pub enum AccountsResponse<T> {
     Success(SuccessResponse<T>),
     Error(ErrorResponse),
@@ -26,19 +27,9 @@ pub struct ErrorResponse {
     error: ApiError,
 }
 
+#[derive(Serialize)]
+#[serde(rename_all = "snake_case")]
 pub enum ApiError {
     InternalError,
-}
-
-impl Serialize for ApiError {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        let err_str = match self {
-            ApiError::InternalError => "internal_error",
-        };
-
-        serializer.serialize_str(err_str)
-    }
+    Unauthorized,
 }

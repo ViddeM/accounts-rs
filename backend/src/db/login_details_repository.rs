@@ -6,6 +6,23 @@ use chrono::{DateTime, Utc};
 use sqlx::types::uuid::Uuid;
 use sqlx::Transaction;
 
+pub async fn get_by_account_id(
+    transaction: &mut Transaction<'_, DB>,
+    account_id: Uuid,
+) -> AccountsResult<Option<LoginDetails>> {
+    Ok(sqlx::query_as!(
+        LoginDetails,
+        "
+SELECT *
+FROM login_details
+WHERE account_id = $1
+    ",
+        account_id
+    )
+    .fetch_optional(transaction)
+    .await?)
+}
+
 pub async fn get_by_email(
     transaction: &mut Transaction<'_, DB>,
     email: &str,

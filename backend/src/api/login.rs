@@ -22,7 +22,7 @@ const ERR_INTERNAL: &str = "An internal error occurred";
 
 const MIN_PASSWORD_LEN_KEY: &str = "min_password_len";
 const MAX_PASSWORD_LEN_KEY: &str = "max_password_len";
-const LOGIN_SUCCESSFUL_ADDRESS: &str = "/api/login_successful";
+const LOGIN_SUCCESSFUL_ADDRESS: &str = "/";
 const EMAIL_KEY: &str = "email";
 
 fn get_default_login_data() -> BTreeMap<&'static str, String> {

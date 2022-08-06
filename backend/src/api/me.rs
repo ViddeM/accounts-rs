@@ -13,9 +13,11 @@ use crate::{
 use crate::api::response::AccountsResponse;
 
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct MeResponse {
     first_name: String,
     last_name: String,
+    email: Option<String>,
 }
 
 #[get("/me")]
@@ -23,8 +25,15 @@ pub async fn get_me(
     db_pool: &State<sqlx::Pool<DB>>,
     session: Session,
 ) -> Json<AccountsResponse<MeResponse>> {
-    let acc = match user_service::get_me(session.account_id, db_pool).await {
-        Ok(acc) => acc,
+    let resp = match user_service::get_me(session.account_id, db_pool).await {
+        Ok((acc, login_details)) => MeResponse {
+            first_name: acc.first_name,
+            last_name: acc.last_name,
+            email: match login_details {
+                Some(l) => Some(l.email),
+                None => None,
+            },
+        },
         Err(UserError::Internal) => {
             error!("An internal error occured whilst retrieving me");
             return Json(AccountsResponse::error(ApiError::InternalError));
@@ -36,8 +45,5 @@ pub async fn get_me(
         }
     };
 
-    Json(AccountsResponse::success(MeResponse {
-        first_name: acc.first_name,
-        last_name: acc.last_name,
-    }))
+    Json(AccountsResponse::success(resp))
 }

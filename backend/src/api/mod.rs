@@ -7,6 +7,6 @@ pub mod login_successful;
 pub mod logout;
 pub mod me;
 pub mod password_reset;
+pub mod response;
 
 mod password_validation;
-mod response;

@@ -13,6 +13,8 @@
     "prettier:fix": "prettier --write --loglevel error --ignore-path .gitignore \"**/*.{ts,tsx,js,jsx,json,yml,yaml}\""
   },
   "dependencies": {
+    "@types/encodeurl": "^1.0.0",
+    "axios": "^0.27.2",
     "express": "^4.17.1",
     "http-proxy-middleware": "^2.0.1",
     "next": "12.0.1",
