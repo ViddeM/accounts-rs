@@ -4,6 +4,7 @@ use serde::Serialize;
 use crate::{
     api::response::ApiError,
     db::DB,
+    models::authority::AuthorityLevel,
     services::{
         session_service::Session,
         user_service::{self, UserError},
@@ -18,6 +19,7 @@ pub struct MeResponse {
     first_name: String,
     last_name: String,
     email: Option<String>,
+    authority: AuthorityLevel,
 }
 
 #[get("/me")]
@@ -33,6 +35,7 @@ pub async fn get_me(
                 Some(l) => Some(l.email),
                 None => None,
             },
+            authority: acc.authority,
         },
         Err(UserError::Internal) => {
             error!("An internal error occured whilst retrieving me");
