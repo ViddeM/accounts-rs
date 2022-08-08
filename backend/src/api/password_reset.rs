@@ -1,5 +1,6 @@
 use std::collections::BTreeMap;
 
+use mobc_redis::RedisConnectionManager;
 use rocket::{form::Form, response::Redirect, Either, State};
 use rocket_dyn_templates::Template;
 use sqlx::types::uuid::Uuid;
@@ -102,6 +103,7 @@ pub async fn post_reset_password(
     config: &State<Config>,
     db_pool: &State<Pool<DB>>,
     reset_password: Form<PasswordResetForm>,
+    redis_pool: &State<mobc::Pool<RedisConnectionManager>>,
 ) -> Template {
     let mut data = get_default_password_page_data();
 
@@ -128,6 +130,7 @@ pub async fn post_reset_password(
     if let Err(e) = reset_password_service::update_password(
         config,
         db_pool,
+        redis_pool,
         reset_password.email.to_owned(),
         code,
         reset_password.new_password.to_owned(),

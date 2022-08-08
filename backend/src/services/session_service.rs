@@ -104,6 +104,8 @@ pub enum SessionError {
     CacheInsertion,
     #[error("Failed to delete session from cache")]
     SessionDeletion,
+    #[error("Failed to read value from redis cache")]
+    CacheReadError,
 }
 
 #[rocket::async_trait]
@@ -213,8 +215,9 @@ pub async fn set_session(
         .map(char::from)
         .collect();
 
+    let time_until_expiration = Duration::days(SESSION_COOKIE_EXPIRATION_DAYS);
     let expiration_time: DateTime<Utc> = Utc::now()
-        .checked_add_signed(Duration::days(SESSION_COOKIE_EXPIRATION_DAYS))
+        .checked_add_signed(time_until_expiration)
         .ok_or(SessionError::ExpirationTimeGeneration)?;
 
     let session = Session {
@@ -224,10 +227,25 @@ pub async fn set_session(
     };
 
     redis_conn
-        .set::<String, Session, String>(session_id.clone(), session)
+        .set_ex::<String, Session, String>(
+            session_id.clone(),
+            session,
+            time_until_expiration.num_seconds() as usize,
+        )
         .await
         .or_else(|err| {
             error!("Failed to insert session in the redis cache, err: {}", err);
+            Err(SessionError::CacheInsertion)
+        })?;
+
+    redis_conn
+        .lpush::<String, String, usize>(login_details.account_id.to_string(), session_id.clone())
+        .await
+        .or_else(|err| {
+            error!(
+                "Failed to update list of sessions for account in redis, err: {}",
+                err
+            );
             Err(SessionError::CacheInsertion)
         })?;
 
@@ -255,4 +273,38 @@ pub async fn delete_session_cookie<'r>(cookie_jar: &CookieJar<'r>) {
         cookie_jar.remove_private(cookie);
     }
     // If the result is none then the cookie doesn't exist and we are all good
+}
+
+pub async fn reset_account_sessions(
+    redis_conn: &mut mobc::Connection<RedisConnectionManager>,
+    account_id: Uuid,
+) -> Result<(), SessionError> {
+    let list = redis_conn
+        .lrange::<String, Vec<String>>(account_id.to_string(), 0, -1)
+        .await
+        .or_else(|err| {
+            error!("Failed to get list of sessions for account, err: {}", err);
+            Err(SessionError::CacheReadError)
+        })?;
+
+    redis_conn
+        .del::<Vec<String>, usize>(list)
+        .await
+        .or_else(|err| {
+            error!("Failed to delete sessions for account, err: {}", err);
+            Err(SessionError::SessionDeletion)
+        })?;
+
+    redis_conn
+        .del::<String, ()>(account_id.to_string())
+        .await
+        .or_else(|err| {
+            error!(
+                "Failed to delete list of sessions for account, err: {}",
+                err
+            );
+            Err(SessionError::SessionDeletion)
+        })?;
+
+    Ok(())
 }

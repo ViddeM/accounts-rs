@@ -1,4 +1,5 @@
 use chrono::Utc;
+use mobc_redis::RedisConnectionManager;
 use rocket::State;
 use sqlx::types::uuid::Uuid;
 use sqlx::Pool;
@@ -9,6 +10,8 @@ use crate::{
     services::{email_service, email_service::EmailError, password_service},
     util::{accounts_error::AccountsError, config::Config},
 };
+
+use super::session_service;
 
 #[derive(Debug, thiserror::Error)]
 pub enum ResetPasswordError {
@@ -133,6 +136,7 @@ If you did not request this password reset you can safely ignore this email.
 pub async fn update_password(
     config: &State<Config>,
     db_pool: &State<Pool<DB>>,
+    redis_pool: &State<mobc::Pool<RedisConnectionManager>>,
     email: String,
     code: Uuid,
     password: String,
@@ -178,6 +182,18 @@ pub async fn update_password(
 
     reset_password_repository::delete_password_reset(&mut transaction, password_reset_code.id)
         .await?;
+
+    let mut redis_conn = redis_pool.get().await.or_else(|err| {
+        error!("Failed to retrieve redis connection, err {}", err);
+        Err(ResetPasswordError::Internal)
+    })?;
+
+    session_service::reset_account_sessions(&mut redis_conn, account.account_id)
+        .await
+        .or_else(|err| {
+            error!("Failed to reset account sessions, err: {}", err);
+            Err(ResetPasswordError::Internal)
+        })?;
 
     transaction.commit().await?;
     Ok(())
