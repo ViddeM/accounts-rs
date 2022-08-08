@@ -10,7 +10,7 @@ pub async fn post_logout(
     redis_pool: &State<mobc::Pool<RedisConnectionManager>>,
 ) -> Redirect {
     let session = match session {
-        None => return Redirect::to("/api/login"),
+        None => return Redirect::to("/"),
         Some(s) => s,
     };
 
@@ -24,12 +24,12 @@ pub async fn post_logout(
             }
         }
         Err(e) => {
-            // Also here we can have a memory leak but let's continue and hopefully our users won't notice at least.
+            // Also here we can have a memory leak but let's continue and hopefully our users won't notice.
             error!("Failed to get connection to redis DB, err: {}", e);
         }
     };
 
     delete_session_cookie(cookies).await;
 
-    Redirect::to("/api/login")
+    Redirect::to("/")
 }

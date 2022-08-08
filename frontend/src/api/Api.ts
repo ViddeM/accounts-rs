@@ -34,6 +34,9 @@ export const Api = {
     getMe: (cookie?: string) => {
       return get<Me>("/me", cookie);
     },
+    postLogout: () => {
+      return handleResponse(axios.post<RawApiResponse<void>>("/logout", {}));
+    },
   },
 };
 

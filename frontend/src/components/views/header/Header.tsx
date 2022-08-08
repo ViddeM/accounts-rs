@@ -7,9 +7,10 @@ import {
   USERS_ENDPOINT,
   WHITELIST_ENDPOINT,
 } from "../../../api/Endpoints";
+import { Button } from "../../elements/Buttons/Buttons";
 
 const Header = () => {
-  const { pathname } = useRouter();
+  const { pathname, push } = useRouter();
 
   return (
     <header className={styles.headerContainer}>
@@ -20,6 +21,21 @@ const Header = () => {
             <h1 className={styles.headerTitle}>Accounts-RS</h1>
           </a>
         </Link>
+        <Button
+          size={"normal"}
+          variant={"outlined"}
+          onClick={() => {
+            Api.me
+              .postLogout()
+              .then(() => push("/"))
+              .catch((err) => {
+                console.error("Error during logout", err);
+                //  TODO: Handle error
+              });
+          }}
+        >
+          Logout
+        </Button>
       </div>
       <ul className={styles.subHeader}>
         <li
