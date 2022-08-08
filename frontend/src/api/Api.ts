@@ -1,6 +1,7 @@
 import axios, { AxiosResponse } from "axios";
 import encodeurl from "encodeurl";
 import { Me } from "./Me";
+import { User } from "./User";
 
 let baseUrl = "/api";
 // Check if we're server side
@@ -36,6 +37,11 @@ export const Api = {
     },
     postLogout: () => {
       return handleResponse(axios.post<RawApiResponse<void>>("/logout", {}));
+    },
+  },
+  user: {
+    getAll: (cookie?: string) => {
+      return get<{ users: User[] }>("/users", cookie);
     },
   },
 };

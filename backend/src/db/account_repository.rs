@@ -76,3 +76,17 @@ WHERE id = $1
     .fetch_optional(transaction)
     .await?)
 }
+
+pub async fn get_all_accounts(
+    transaction: &mut Transaction<'_, DB>,
+) -> AccountsResult<Vec<Account>> {
+    Ok(sqlx::query_as!(
+        Account,
+        r#"
+SELECT id, first_name, last_name, created_at, modified_at, authority AS "authority: _"
+FROM account
+    "#
+    )
+    .fetch_all(transaction)
+    .await?)
+}

@@ -8,5 +8,6 @@ pub mod logout;
 pub mod me;
 pub mod password_reset;
 pub mod response;
+pub mod users;
 
 mod password_validation;

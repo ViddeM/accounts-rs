@@ -1,0 +1,17 @@
+@import "../../resources/styles/vars";
+
+.users {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  p {
+    width: 100%;
+    margin: $space 0 0 0;
+    text-align: right;
+  }
+}
+
+.usersTable {
+  width: 400px;
+}
