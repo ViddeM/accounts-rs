@@ -52,3 +52,20 @@ RETURNING *
     .fetch_one(transaction)
     .await?)
 }
+
+pub async fn remove_email(
+    transaction: &mut Transaction<'_, DB>,
+    email: String,
+) -> AccountsResult<()> {
+    sqlx::query_as!(
+        Whitelist,
+        r#"
+DELETE FROM whitelist
+WHERE email = $1
+    "#,
+        email
+    )
+    .execute(transaction)
+    .await?;
+    Ok(())
+}

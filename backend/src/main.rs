@@ -81,6 +81,8 @@ async fn rocket() -> _ {
                 api::me::get_me,
                 api::users::get_users,
                 api::whitelist::get_whitelist,
+                api::whitelist::add_email_to_whitelist,
+                api::whitelist::delete_email_from_whitelist
             ],
         )
         .mount("/api/admin", routes![api::admin_view::get_admin_view,])

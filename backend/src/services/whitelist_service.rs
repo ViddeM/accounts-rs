@@ -53,5 +53,25 @@ pub async fn add_to_whitelist(
             Err(err)
         })?;
 
+    transaction.commit().await?;
+
     Ok(email)
+}
+
+pub async fn delete_from_whitelist(
+    db_pool: &State<Pool<DB>>,
+    email: String,
+) -> Result<(), WhitelistError> {
+    let mut transaction = new_transaction(db_pool).await?;
+
+    whitelist_repository::remove_email(&mut transaction, email)
+        .await
+        .or_else(|err| {
+            error!("Failed to delete email from whitelist, err {}", err);
+            Err(err)
+        })?;
+
+    transaction.commit().await?;
+
+    Ok(())
 }

@@ -1,22 +1,18 @@
 @import "../../resources/styles/vars";
 
-.addToWhitelistForm {
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: baseline;
-  width: 100%;
-
-  :not(:last-child) {
-    margin-right: $space;
+.addToWhitelistCard {
+  & > h2 {
+    margin-bottom: $space;
   }
 
-  :nth-child(2) {
-    flex: 1;
-  }
+  & > form {
+    width: 100%;
+    overflow: scroll;
+    padding-bottom: 1rem;
 
-  :last-child {
-    color: green;
+    & > table {
+      width: 100%;
+    }
   }
 }
 
@@ -31,3 +27,4 @@
     margin-left: 0.5rem;
   }
 }
+

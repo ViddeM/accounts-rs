@@ -3,3 +3,16 @@
 .resetPasswordLink {
   color: $primary-color;
 }
+
+.infoRow {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: baseline;
+  width: 100%;
+}
+
+.myInfo {
+  width: 100%;
+  margin: $space 0;
+}
