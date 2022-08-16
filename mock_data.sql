@@ -1,4 +1,7 @@
 -- POSTGRES MOCK DATA
+
+-- Assumes the PEPPER is set to 'stR9qsYTeTavedZ9Kqo34e338apuJj47'
+
 INSERT INTO login_provider(name)
 VALUES ('local');
 -- Insert admin account with email: 'pelle.karlsson@test.com' and password: 'asdasd123123'
