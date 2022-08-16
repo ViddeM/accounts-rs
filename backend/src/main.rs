@@ -80,6 +80,7 @@ async fn rocket() -> _ {
                 api::logout::post_logout,
                 api::me::get_me,
                 api::users::get_users,
+                api::whitelist::get_whitelist,
             ],
         )
         .mount("/api/admin", routes![api::admin_view::get_admin_view,])

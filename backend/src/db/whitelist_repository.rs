@@ -21,3 +21,34 @@ WHERE email = $1 AND login_provider = $2
     .fetch_optional(transaction)
     .await?)
 }
+
+pub async fn get_all_whitelisted_emails(
+    transaction: &mut Transaction<'_, DB>,
+) -> AccountsResult<Vec<Whitelist>> {
+    Ok(sqlx::query_as!(
+        Whitelist,
+        r#"
+SELECT *
+FROM whitelist
+    "#
+    )
+    .fetch_all(transaction)
+    .await?)
+}
+
+pub async fn add_email_to_local_whitelist(
+    transaction: &mut Transaction<'_, DB>,
+    email: String,
+) -> AccountsResult<Whitelist> {
+    Ok(sqlx::query_as!(
+        Whitelist,
+        r#"
+INSERT INTO whitelist (email, login_provider)
+VALUES                ($1,    'local')
+RETURNING *
+        "#,
+        email
+    )
+    .fetch_one(transaction)
+    .await?)
+}

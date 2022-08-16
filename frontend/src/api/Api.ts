@@ -44,6 +44,11 @@ export const Api = {
       return get<{ users: User[] }>("/users", cookie);
     },
   },
+  whitelist: {
+    getAll: (cookie?: string) => {
+      return get<{ emails: String[] }>("/whitelist", cookie);
+    },
+  },
 };
 
 function get<T>(endpoint: string, cookie?: string): Promise<ApiResponse<T>> {

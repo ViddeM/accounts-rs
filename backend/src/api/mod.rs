@@ -9,5 +9,6 @@ pub mod me;
 pub mod password_reset;
 pub mod response;
 pub mod users;
+pub mod whitelist;
 
 mod password_validation;

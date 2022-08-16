@@ -1,0 +1,33 @@
+@import "../../resources/styles/vars";
+
+.addToWhitelistForm {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: baseline;
+  width: 100%;
+
+  :not(:last-child) {
+    margin-right: $space;
+  }
+
+  :nth-child(2) {
+    flex: 1;
+  }
+
+  :last-child {
+    color: green;
+  }
+}
+
+.addToWhitelistRow {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: baseline;
+
+  & > :last-child {
+    flex: 1;
+    margin-left: 0.5rem;
+  }
+}

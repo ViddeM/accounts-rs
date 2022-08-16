@@ -10,7 +10,6 @@ type UsersProps = {
 };
 
 const Users = ({ users, error }: UsersProps) => {
-  console.log("Users: ", users);
   if (error) {
     return <div>FUck</div>;
   }
