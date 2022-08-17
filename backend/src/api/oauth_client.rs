@@ -13,11 +13,13 @@ use crate::{
 use super::response::ApiError;
 
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct OauthClientsResponse {
     oauth_clients: Vec<OauthClientResponse>,
 }
 
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct OauthClientResponse {
     client_name: String,
     client_id: String,
@@ -50,12 +52,14 @@ pub async fn get_oauth_clients(
 }
 
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct NewClientRequest {
     pub client_name: String,
     pub redirect_uri: String,
 }
 
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct NewClientResponse {
     pub client_id: String,
     pub client_secret: String,

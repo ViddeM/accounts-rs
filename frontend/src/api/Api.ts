@@ -2,6 +2,7 @@ import axios, {AxiosResponse} from "axios";
 import encodeurl from "encodeurl";
 import {Me} from "./Me";
 import {User} from "./User";
+import {NewOAuthClient, OauthClient} from "./OauthClient";
 
 let baseUrl = "/api";
 // Check if we're server side
@@ -57,6 +58,17 @@ export const Api = {
             return handleResponse(axios.delete<RawApiResponse<{}>>(`/whitelist/${email}`));
         }
     },
+    oauthClients: {
+        getAll: (cookie?: string) => {
+            return get<{ oauthClients: OauthClient[] }>("/oauth_clients", cookie);
+        },
+        create: (clientName: string, redirectUri: string) => {
+            return handleResponse(axios.post<RawApiResponse<NewOAuthClient>>("/oauth_clients", {
+                clientName: clientName,
+                redirectUri: redirectUri
+            }))
+        }
+    }
 };
 
 function get<T>(endpoint: string, cookie?: string): Promise<ApiResponse<T>> {
