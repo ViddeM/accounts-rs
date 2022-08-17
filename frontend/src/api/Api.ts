@@ -118,3 +118,7 @@ export interface ApiResponse<T> {
     data?: T;
     rawResponse: AxiosResponse<RawApiResponse<T>>;
 }
+
+export function isClientSide(): boolean {
+    return typeof document !== "undefined";
+}

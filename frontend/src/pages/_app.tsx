@@ -7,18 +7,28 @@ import type {AppContext, AppProps} from "next/app";
 import App from "next/app";
 import Head from "next/head";
 import Header from "../components/views/header/Header";
-import {Api} from "../api/Api";
+import {Api, isClientSide} from "../api/Api";
 import React from "react";
 import {AuthContext} from "../hooks/useMe";
 import {Me} from "../api/Me";
 import ErrorHeader from "../components/views/error_header/ErrorHeader";
+import {useRouter} from "next/router";
+import {LOGIN_PAGE_ENDPOINT} from "../api/Endpoints";
 
 type MyAppProps = AppProps & {
     me: Me;
+    error?: boolean;
     failedToReachBackend: boolean;
 };
 
-function MyApp({Component, pageProps, me, failedToReachBackend}: MyAppProps) {
+function MyApp({Component, pageProps, me, error, failedToReachBackend}: MyAppProps) {
+    const router = useRouter();
+    if (error && router.pathname !== LOGIN_PAGE_ENDPOINT && isClientSide()) {
+        router.push(LOGIN_PAGE_ENDPOINT).then(() => {
+            router.reload();
+        });
+    }
+
     return (
         <AuthContext.Provider value={{me: me}}>
             <Head>

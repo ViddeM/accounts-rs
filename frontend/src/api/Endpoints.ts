@@ -1,4 +1,5 @@
 export const LOGIN_ENDPOINT = "/api/login";
+export const LOGIN_PAGE_ENDPOINT = "/login";
 export const ME_ENDPOINT = "/me";
 export const USERS_ENDPOINT = "/users";
 export const CLIENTS_ENDPOINT = "/clients";
