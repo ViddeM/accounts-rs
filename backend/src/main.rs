@@ -3,13 +3,10 @@
 #[macro_use]
 extern crate rocket;
 
-use ::serde::Serialize;
 use api::response::{AccountsResponse, ApiError};
-use rocket::response::status::{self, Unauthorized};
 use rocket::response::Responder;
-use rocket::serde;
 use rocket::serde::json::Json;
-use rocket::{fs::FileServer, response::Redirect, Request};
+use rocket::{fs::FileServer, Request};
 use rocket_dyn_templates::Template;
 use sqlx::postgres::PgPoolOptions;
 use tokio::task;
@@ -82,7 +79,9 @@ async fn rocket() -> _ {
                 api::users::get_users,
                 api::whitelist::get_whitelist,
                 api::whitelist::add_email_to_whitelist,
-                api::whitelist::delete_email_from_whitelist
+                api::whitelist::delete_email_from_whitelist,
+                api::oauth_client::get_oauth_clients,
+                api::oauth_client::post_new_client,
             ],
         )
         .mount("/api/admin", routes![api::admin_view::get_admin_view,])

@@ -29,10 +29,20 @@ impl<'r> FromRequest<'r> for AdminSession {
     async fn from_request(
         request: &'r rocket::Request<'_>,
     ) -> rocket::request::Outcome<Self, Self::Error> {
-        let session = match request.guard::<Session>().await.succeeded() {
-            Some(s) => s,
-            None => {
-                error!("Failed to retrieve session");
+        let session = match request.guard::<Session>().await {
+            rocket::outcome::Outcome::Success(s) => s,
+            rocket::outcome::Outcome::Failure((status, error)) => {
+                error!(
+                    "Failed to retrieve session, status: {}, err: {}",
+                    status, error
+                );
+                return rocket::request::Outcome::Failure((
+                    Status::Unauthorized,
+                    AdminSessionError::MissingSession,
+                ));
+            }
+            rocket::outcome::Outcome::Forward(_) => {
+                error!("Failed to retrieve session, got forward response");
                 return rocket::request::Outcome::Failure((
                     Status::Unauthorized,
                     AdminSessionError::MissingSession,

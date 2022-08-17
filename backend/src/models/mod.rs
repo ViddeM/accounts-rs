@@ -3,6 +3,7 @@ pub mod activation_code;
 pub mod authority;
 pub mod login_details;
 pub mod login_provider;
+pub mod oauth_client;
 pub mod password_reset;
 pub mod third_party_login;
 pub mod whitelist;

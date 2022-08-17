@@ -6,6 +6,7 @@ pub mod login;
 pub mod login_successful;
 pub mod logout;
 pub mod me;
+pub mod oauth_client;
 pub mod password_reset;
 pub mod response;
 pub mod users;

@@ -4,7 +4,6 @@ use serde::{Deserialize, Serialize};
 use crate::{
     api::response::ApiError,
     db::DB,
-    models::whitelist::Whitelist,
     services::{admin_session_service::AdminSession, whitelist_service},
 };
 

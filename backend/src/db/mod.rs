@@ -5,6 +5,7 @@ pub mod account_repository;
 pub mod activation_code_repository;
 pub mod login_details_repository;
 pub mod login_provider_repository;
+pub mod oauth_client_repository;
 pub mod reset_password_repository;
 pub mod third_party_login_repository;
 pub mod whitelist_repository;
