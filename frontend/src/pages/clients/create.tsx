@@ -23,7 +23,12 @@ const CreateClient = () => {
         Api.oauthClients.create(clientName, redirectUri).then(resp => {
             openModal({
                 title: "New Client info",
-                content: `The client has been created successfully, here is the client id and client secret necessary later, the secret will not be viewable later on so make sure to write it down.\n\nClient ID: ${resp.data.clientId}\n\nClient Secret: ${resp.data.clientSecret}`,
+                content: `The client has been created successfully, below you will find the client id and client secret necessary later.
+Make sure to write these down as the client secret will not be viewable after this point.
+                
+Client ID: ${resp.data.clientId}
+                
+Client Secret: ${resp.data.clientSecret}`,
                 confirmButton: {
                     text: "Ok",
                     onClick: () => {
