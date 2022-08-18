@@ -6,6 +6,9 @@ import {OauthClient} from "../../api/OauthClient";
 import React from "react";
 import Link from "next/link";
 import {CREATE_CLIENT_ENDPOINT} from "../../api/Endpoints";
+import {IconButton} from "../../components/elements/Buttons/Buttons";
+import {faTrashCan} from "@fortawesome/free-regular-svg-icons";
+import {useRouter} from "next/router";
 
 type ClientsProps = {
     error?: boolean;
@@ -13,6 +16,8 @@ type ClientsProps = {
 }
 
 const Clients = ({error, clients}: ClientsProps) => {
+    const router = useRouter();
+
     if (error) {
         return <div>ERRROR ERROR</div>
     }
@@ -33,21 +38,38 @@ const Clients = ({error, clients}: ClientsProps) => {
                         <b>
                             {client.clientName}
                         </b>
-                        <div>
-                            <b>
-                                Client ID
-                            </b>
-                            <p>
-                                {client.clientId}
-                            </p>
-                        </div>
-                        <div>
-                            <b>
-                                Redirect URI
-                            </b>
-                            <p>
-                                {client.redirectUri}
-                            </p>
+                        <div className={styles.row}>
+                            <div className={`${styles.column} ${styles.flex}`}>
+                                <div className={styles.row}>
+                                    <b>
+                                        Client ID
+                                    </b>
+                                    <p>
+                                        {client.clientId}
+                                    </p>
+                                </div>
+                                <div className={styles.row}>
+                                    <b>
+                                        Redirect URI
+                                    </b>
+                                    <p>
+                                        {client.redirectUri}
+                                    </p>
+                                </div>
+                            </div>
+                            <div>
+                                <IconButton variant="opaque" size="normal" icon={faTrashCan} onClick={() => {
+                                    let deleteYes = confirm(`Are you sure you want to delete client '${client.clientName}'?\nThis action cannot be undone.`);
+
+                                    if (deleteYes) {
+                                        Api.oauthClients.remove(client.id).then(() => {
+                                            router.reload();
+                                        }).catch(err => {
+                                            console.log("ERROR ERROR ", err);
+                                        })
+                                    }
+                                }}/>
+                            </div>
                         </div>
                     </div>
                 ))}

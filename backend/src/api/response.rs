@@ -33,4 +33,5 @@ pub enum ApiError {
     InternalError,
     Unauthorized,
     OauthClientNameTaken,
+    NoClientWithId,
 }

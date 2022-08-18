@@ -1,4 +1,4 @@
-use sqlx::Transaction;
+use sqlx::{types::Uuid, Transaction};
 
 use crate::{models::oauth_client::OauthClient, util::accounts_error::AccountsResult};
 
@@ -54,4 +54,20 @@ WHERE client_name=$1
     )
     .fetch_optional(transaction)
     .await?)
+}
+
+pub async fn delete_by_id(transaction: &mut Transaction<'_, DB>, id: Uuid) -> AccountsResult<()> {
+    sqlx::query_as!(
+        OauthClient,
+        "
+DELETE
+FROM oauth_client
+WHERE id=$1
+        ",
+        id
+    )
+    .execute(transaction)
+    .await?;
+
+    Ok(())
 }

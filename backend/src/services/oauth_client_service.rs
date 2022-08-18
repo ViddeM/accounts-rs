@@ -1,5 +1,6 @@
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use rocket::State;
+use sqlx::types::Uuid;
 
 use crate::{
     db::{new_transaction, oauth_client_repository, DB},
@@ -16,6 +17,8 @@ pub enum OauthClientError {
     Internal,
     #[error("The Oauth client name is already taken")]
     ClientNameTaken,
+    #[error("The provided ID is not a valid UUID")]
+    InvalidId,
 }
 
 impl From<sqlx::Error> for OauthClientError {
@@ -85,4 +88,24 @@ pub async fn create_oauth_client(
     transaction.commit().await?;
 
     Ok(oauth_client)
+}
+
+pub async fn delete_oauth_client(
+    db_pool: &State<sqlx::Pool<DB>>,
+    id: String,
+) -> Result<(), OauthClientError> {
+    let id = Uuid::parse_str(&id).or_else(|err| {
+        error!("Failed to parse oauth client id as UUID, err {}", err);
+        Err(OauthClientError::InvalidId)
+    })?;
+
+    let mut transaction = new_transaction(db_pool).await?;
+    oauth_client_repository::delete_by_id(&mut transaction, id)
+        .await
+        .or_else(|err| {
+            error!("Failed to delete oauth client, err {}", err);
+            Err(OauthClientError::Internal)
+        })?;
+
+    Ok(())
 }

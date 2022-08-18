@@ -67,6 +67,9 @@ export const Api = {
                 clientName: clientName,
                 redirectUri: redirectUri
             }))
+        },
+        remove: (id: string) => {
+            return handleResponse(axios.delete<RawApiResponse<{}>>(`/oauth_clients/${id}`))
         }
     }
 };
