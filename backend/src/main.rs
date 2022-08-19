@@ -82,6 +82,7 @@ async fn rocket() -> _ {
                 api::whitelist::delete_email_from_whitelist,
                 api::oauth_client::get_oauth_clients,
                 api::oauth_client::post_new_client,
+                api::oauth_client::delete_client,
             ],
         )
         .mount("/api/admin", routes![api::admin_view::get_admin_view,])

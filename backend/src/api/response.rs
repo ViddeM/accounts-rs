@@ -32,6 +32,7 @@ pub struct ErrorResponse {
 pub enum ApiError {
     InternalError,
     Unauthorized,
+    InvalidUuid,
     OauthClientNameTaken,
-    NoClientWithId,
+    NoOauthClientWithId,
 }

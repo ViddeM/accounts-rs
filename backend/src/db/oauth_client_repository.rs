@@ -56,18 +56,20 @@ WHERE client_name=$1
     .await?)
 }
 
-pub async fn delete_by_id(transaction: &mut Transaction<'_, DB>, id: Uuid) -> AccountsResult<()> {
-    sqlx::query_as!(
+pub async fn delete_by_id(
+    transaction: &mut Transaction<'_, DB>,
+    id: Uuid,
+) -> AccountsResult<Option<OauthClient>> {
+    Ok(sqlx::query_as!(
         OauthClient,
         "
 DELETE
 FROM oauth_client
 WHERE id=$1
+RETURNING *
         ",
         id
     )
-    .execute(transaction)
-    .await?;
-
-    Ok(())
+    .fetch_optional(transaction)
+    .await?)
 }

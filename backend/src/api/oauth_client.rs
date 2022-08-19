@@ -91,7 +91,7 @@ pub async fn post_new_client(
                 Err(OauthClientError::ClientNameTaken) => {
                     error!("The client name has already been taken");
                     return status::Custom(
-                        Status::Conflict,
+                        Status::UnprocessableEntity,
                         Json(AccountsResponse::error(ApiError::OauthClientNameTaken)),
                     );
                 }
@@ -116,8 +116,12 @@ pub async fn delete_client(
     return match oauth_client_service::delete_oauth_client(db_pool, id).await {
         Ok(()) => status::Custom(Status::Ok, Json(AccountsResponse::success(()))),
         Err(OauthClientError::InvalidId) => status::Custom(
+            Status::BadRequest,
+            Json(AccountsResponse::error(ApiError::InvalidUuid)),
+        ),
+        Err(OauthClientError::ClientIdNotFound) => status::Custom(
             Status::NotFound,
-            Json(AccountsResponse::error(ApiError::NoClientWithId)),
+            Json(AccountsResponse::error(ApiError::NoOauthClientWithId)),
         ),
         Err(_) => status::Custom(
             Status::InternalServerError,

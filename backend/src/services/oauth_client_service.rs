@@ -19,6 +19,8 @@ pub enum OauthClientError {
     ClientNameTaken,
     #[error("The provided ID is not a valid UUID")]
     InvalidId,
+    #[error("No client with that ID exists")]
+    ClientIdNotFound,
 }
 
 impl From<sqlx::Error> for OauthClientError {
@@ -105,7 +107,10 @@ pub async fn delete_oauth_client(
         .or_else(|err| {
             error!("Failed to delete oauth client, err {}", err);
             Err(OauthClientError::Internal)
-        })?;
+        })?
+        .ok_or(OauthClientError::ClientIdNotFound)?;
+
+    transaction.commit().await?;
 
     Ok(())
 }
