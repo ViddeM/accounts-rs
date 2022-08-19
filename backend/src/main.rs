@@ -83,6 +83,7 @@ async fn rocket() -> _ {
                 api::oauth_client::get_oauth_clients,
                 api::oauth_client::post_new_client,
                 api::oauth_client::delete_client,
+                api::oauth::authorize::get_authorization,
             ],
         )
         .mount("/api/admin", routes![api::admin_view::get_admin_view,])
