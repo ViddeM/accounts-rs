@@ -3,9 +3,9 @@
 #[macro_use]
 extern crate rocket;
 
-use api::response::{AccountsResponse, ApiError};
+use api::response::{ErrMsg, ResponseStatus};
+use rocket::http::Status;
 use rocket::response::Responder;
-use rocket::serde::json::Json;
 use rocket::{fs::FileServer, Request};
 use rocket_dyn_templates::Template;
 use sqlx::postgres::PgPoolOptions;
@@ -86,7 +86,6 @@ async fn rocket() -> _ {
                 api::oauth::authorize::get_authorization,
             ],
         )
-        .mount("/api/admin", routes![api::admin_view::get_admin_view,])
         .mount("/api/public", FileServer::from("static/public"))
         .register("/", catchers![unauthorized, forbidden])
         .manage(db_pool.clone())
@@ -95,7 +94,7 @@ async fn rocket() -> _ {
         .attach(Template::fairing())
 }
 
-struct UnauthorizedResponse(Json<AccountsResponse<()>>);
+struct UnauthorizedResponse(ResponseStatus<()>);
 
 impl<'r> Responder<'r, 'r> for UnauthorizedResponse {
     fn respond_to(self, req: &'r Request<'_>) -> rocket::response::Result<'r> {
@@ -107,7 +106,10 @@ impl<'r> Responder<'r, 'r> for UnauthorizedResponse {
 
 #[catch(401)]
 fn unauthorized() -> UnauthorizedResponse {
-    UnauthorizedResponse(Json(AccountsResponse::error(ApiError::Unauthorized)))
+    UnauthorizedResponse(ResponseStatus::err(
+        Status::Unauthorized,
+        ErrMsg::Unauthorized,
+    ))
 }
 
 const FORBIDDEN_TEMPLATE_NAME: &str = "forbidden-handler";

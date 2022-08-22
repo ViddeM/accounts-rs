@@ -1,5 +1,4 @@
 pub mod activate_account;
-pub mod admin_view;
 pub mod create_account;
 pub mod index;
 pub mod login;

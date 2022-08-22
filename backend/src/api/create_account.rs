@@ -18,7 +18,6 @@ const FIRST_NAME_KEY: &str = "first_name";
 const LAST_NAME_KEY: &str = "last_name";
 const EMAIL_KEY: &str = "email";
 
-const ERR_EMAIL_NOT_WHITELISTED: &str = "The provided email is not in the whitelist";
 const ERR_INTERNAL: &str = "An internal error has occured, please try again later";
 
 const INFO_EMAIL_HAS_BEEN_SENT: &str = "Your account has been created but has yet to be activated,\

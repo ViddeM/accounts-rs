@@ -1,8 +1,8 @@
-use rocket::{serde::json::Json, State};
+use rocket::State;
 use serde::Serialize;
 
 use crate::{
-    api::response::ApiError,
+    api::response::ResponseStatus,
     db::DB,
     models::authority::AuthorityLevel,
     services::{
@@ -11,9 +11,7 @@ use crate::{
     },
 };
 
-use crate::api::response::AccountsResponse;
-
-#[derive(Serialize)]
+#[derive(Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct MeResponse {
     first_name: String,
@@ -26,7 +24,7 @@ pub struct MeResponse {
 pub async fn get_me(
     db_pool: &State<sqlx::Pool<DB>>,
     session: Session,
-) -> Json<AccountsResponse<MeResponse>> {
+) -> ResponseStatus<MeResponse> {
     let resp = match user_service::get_me(session.account_id, db_pool).await {
         Ok((acc, login_details)) => MeResponse {
             first_name: acc.first_name,
@@ -39,14 +37,14 @@ pub async fn get_me(
         },
         Err(UserError::Internal) => {
             error!("An internal error occured whilst retrieving me");
-            return Json(AccountsResponse::error(ApiError::InternalError));
+            return ResponseStatus::internal_err();
         }
         Err(UserError::AccountNotFound) => {
             error!("Unable to find the account in the session!");
             // Here we should probably clear the session and require re-authorization, but for now return an error
-            return Json(AccountsResponse::error(ApiError::InternalError));
+            return ResponseStatus::internal_err();
         }
     };
 
-    Json(AccountsResponse::success(resp))
+    ResponseStatus::ok(resp)
 }

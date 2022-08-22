@@ -1,21 +1,19 @@
-use rocket::{serde::json::Json, State};
+use rocket::State;
 use serde::Serialize;
 
 use crate::{
-    api::response::ApiError,
+    api::response::ResponseStatus,
     db::DB,
     models::authority::AuthorityLevel,
     services::{admin_session_service::AdminSession, users_service},
 };
 
-use super::response::AccountsResponse;
-
-#[derive(Serialize)]
+#[derive(Serialize, Clone)]
 pub struct Users {
     users: Vec<User>,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct User {
     first_name: String,
@@ -27,15 +25,16 @@ pub struct User {
 pub async fn get_users(
     db_pool: &State<sqlx::Pool<DB>>,
     _admin_session: AdminSession,
-) -> Json<AccountsResponse<Users>> {
+) -> ResponseStatus<Users> {
     let accs = match users_service::get_all_users(db_pool).await {
         Ok(accs) => accs,
         Err(err) => {
             error!("Failed to get all users, err: {}", err);
-            return Json(AccountsResponse::error(ApiError::InternalError));
+            return ResponseStatus::internal_err();
         }
     };
-    Json(AccountsResponse::success(Users {
+
+    ResponseStatus::ok(Users {
         users: accs
             .into_iter()
             .map(|acc| User {
@@ -44,5 +43,5 @@ pub async fn get_users(
                 authority: acc.authority,
             })
             .collect::<Vec<User>>(),
-    }))
+    })
 }
