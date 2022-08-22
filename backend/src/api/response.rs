@@ -2,7 +2,7 @@ use std::fmt::{Display, Formatter};
 
 use rocket::http::Status;
 use rocket::response::{Responder, Response};
-use rocket::serde::json::{json, Json};
+use rocket::serde::json::json;
 use rocket::serde::Serialize;
 use rocket::Request;
 
@@ -88,18 +88,12 @@ impl<'r, T: Serialize + Clone> Responder<'r, 'static> for ResponseStatus<T> {
         }
 
         let response_data = match self.response_data {
-            ResponseData::Success(data) => json!({ "data": data }),
+            ResponseData::Success(data) => json!({ "success": data }),
             ResponseData::Failure(err_msg) => json!({ "error_msg": err_msg }),
         };
 
-        let mut response = Json(json!({
-            "status": self.status.code,
-            "response_data": response_data
-        }))
-        .respond_to(request)?;
-
-        response.set_status(self.status);
-
-        Ok(response)
+        Response::build_from(response_data.respond_to(request)?)
+            .status(self.status)
+            .ok()
     }
 }

@@ -1,3 +1,3 @@
 export interface Whitelist {
-    email: string,
+  email: string;
 }
