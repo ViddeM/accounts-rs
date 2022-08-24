@@ -69,6 +69,7 @@ pub enum ErrMsg {
     OauthClientNameTaken,
     NoOauthClientWithId,
     InvalidResponseType,
+    InvalidGrantType,
 }
 
 impl Display for ErrMsg {

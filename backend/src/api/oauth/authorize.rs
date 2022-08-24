@@ -32,7 +32,7 @@ pub async fn get_authorization(
         {
             Ok(url) => url,
             Err(err) => {
-                panic!("FUCK FUCK");
+                panic!("FUCK FUCK, err: {}", err);
             }
         };
 

@@ -15,6 +15,8 @@ pub enum Oauth2Error {
     NoClientWithId,
     #[error("Redirect uri doesn't match client")]
     InvalidRedirectUri,
+    #[error("Invalid client secret or redirect uri provided")]
+    InvalidClient,
 }
 
 impl From<sqlx::Error> for Oauth2Error {
@@ -59,5 +61,32 @@ pub async fn get_auth_token(
 
     let auth_code = authorization_code_repository::insert(&mut transaction, auth_token).await?;
 
-    Ok(String::new())
+    transaction.commit().await?;
+
+    Ok(format!(
+        "{}?state={}&code={}",
+        client.redirect_uri, state, auth_code.token
+    ))
+}
+
+pub async fn get_access_token(
+    db_pool: &State<Pool<DB>>,
+    client_id: String,
+    client_secret: String,
+    redirect_uri: String,
+    code: String,
+) -> Result<(), Oauth2Error> {
+    let mut transaction = new_transaction(db_pool).await?;
+
+    let client = oauth_client_repository::get_by_client_id(&mut transaction, client_id)
+        .await?
+        .ok_or(Oauth2Error::NoClientWithId)?;
+
+    if client.client_secret != client_secret || client.redirect_uri != redirect_uri {
+        return Err(Oauth2Error::InvalidClient)?;
+    }
+
+    transaction.commit().await?;
+
+    Ok(())
 }
