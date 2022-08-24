@@ -73,3 +73,20 @@ RETURNING *
     .fetch_optional(transaction)
     .await?)
 }
+
+pub async fn get_by_client_id(
+    transaction: &mut Transaction<'_, DB>,
+    client_id: String,
+) -> AccountsResult<Option<OauthClient>> {
+    Ok(sqlx::query_as!(
+        OauthClient,
+        "
+SELECT *
+FROM oauth_client
+WHERE client_id=$1
+    ",
+        client_id
+    )
+    .fetch_optional(transaction)
+    .await?)
+}

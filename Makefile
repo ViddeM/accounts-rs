@@ -1,6 +1,6 @@
 .PHONY: mock
 
-DB_CONTAINER_NAME=accounts_rs-db-1
+DB_CONTAINER_NAME=accounts-rs-db-1
 
 mock: mock_data.sql
 	docker exec -i $(DB_CONTAINER_NAME) psql -U accounts_rs accounts_rs < mock_data.sql

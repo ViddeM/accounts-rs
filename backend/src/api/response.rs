@@ -2,9 +2,9 @@ use std::fmt::{Display, Formatter};
 
 use rocket::http::Status;
 use rocket::response::{Responder, Response};
-use rocket::serde::json::json;
 use rocket::serde::Serialize;
 use rocket::Request;
+use serde_json::json;
 
 #[derive(Clone)]
 pub struct ResponseStatus<T: Serialize + Clone> {
@@ -68,6 +68,7 @@ pub enum ErrMsg {
     InvalidUuid,
     OauthClientNameTaken,
     NoOauthClientWithId,
+    InvalidResponseType,
 }
 
 impl Display for ErrMsg {

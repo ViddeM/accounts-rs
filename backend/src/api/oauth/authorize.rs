@@ -1,11 +1,17 @@
-use rocket::{response::Redirect, State};
+use rocket::{http::Status, response::Redirect, State};
 use sqlx::Pool;
 
-use crate::{api::response::ResponseStatus, db::DB, services::session_service::Session};
+use crate::{
+    api::response::{ErrMsg, ResponseStatus},
+    db::DB,
+    services::{oauth2_authorization_service, session_service::Session},
+};
+
+const RESPONSE_TYPE_CODE: &str = "code";
 
 /// First step in the oauth2 authorization flow.
 #[get("/authorize?<response_type>&<client_id>&<redirect_uri>&<state>")]
-pub fn get_authorization(
+pub async fn get_authorization(
     db_pool: &State<Pool<DB>>,
     response_type: String,
     client_id: String,
@@ -13,5 +19,22 @@ pub fn get_authorization(
     state: String,
     _session: Session,
 ) -> Result<Redirect, ResponseStatus<()>> {
-    Ok(Redirect::found(redirect_uri))
+    if response_type != RESPONSE_TYPE_CODE {
+        return Err(ResponseStatus::err(
+            Status::UnprocessableEntity,
+            ErrMsg::InvalidResponseType,
+        ));
+    }
+
+    let url =
+        match oauth2_authorization_service::get_auth_token(db_pool, client_id, redirect_uri, state)
+            .await
+        {
+            Ok(url) => url,
+            Err(err) => {
+                panic!("FUCK FUCK");
+            }
+        };
+
+    Ok(Redirect::found(url))
 }
