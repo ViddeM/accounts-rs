@@ -18,6 +18,9 @@ const SESSION_COOKIE_KEY: &str = "accounts_rs_session";
 const SESSION_ID_LENGTH: usize = 48;
 const SESSION_COOKIE_EXPIRATION_DAYS: i64 = 5;
 
+const SESSIONS_KEY_PREFIX: &str = "sessions";
+const ACCOUNT_SESSIONS_KEY_PREFIX: &str = "account_sessions";
+
 #[derive(Debug)]
 pub struct Session {
     pub id: String,
@@ -99,10 +102,9 @@ impl<'r> FromRequest<'r> for Session {
             }
         };
 
+        let key = format!("{}:{}", SESSIONS_KEY_PREFIX, session_id);
         let session: Session =
-            match redis_service::redis_get::<Option<RedisSession>>(redis_pool, session_id.clone())
-                .await
-            {
+            match redis_service::redis_get::<Option<RedisSession>>(redis_pool, key).await {
                 Ok(Some(s)) => s.into(),
                 Ok(None) => {
                     error!("Session was not found in the cache, this should generally not happen");
@@ -124,8 +126,10 @@ impl<'r> FromRequest<'r> for Session {
 
         let now = Utc::now();
         if session.expiration < now {
+            let key = format!("{}:{}", SESSIONS_KEY_PREFIX, session_id);
+
             // Session has expired, remove it from redis and cookie
-            if let Err(e) = redis_service::redis_del(redis_pool, session_id.clone()).await {
+            if let Err(e) = redis_service::redis_del(redis_pool, key).await {
                 error!(
                     "Failed to delete expired session (id = {}) from redis, err: {}",
                     session_id, e
@@ -171,22 +175,23 @@ pub async fn set_session(
     }
     .into();
 
+    let key = format!("{}:{}", SESSIONS_KEY_PREFIX, session_id.clone());
     redis_service::redis_set(
         redis_pool,
-        session_id.clone(),
+        key,
         session,
         time_until_expiration.num_seconds() as usize,
     )
     .await
     .or(Err(SessionError::CacheInsertion))?;
 
-    redis_service::redis_push(
-        redis_pool,
-        login_details.account_id.to_string(),
-        session_id.clone(),
-    )
-    .await
-    .or(Err(SessionError::CacheInsertion))?;
+    let key = format!(
+        "{}:{}",
+        ACCOUNT_SESSIONS_KEY_PREFIX, login_details.account_id
+    );
+    redis_service::redis_push(redis_pool, key, session_id.clone())
+        .await
+        .or(Err(SessionError::CacheInsertion))?;
 
     cookies.add_private(
         Cookie::build(SESSION_COOKIE_KEY, session_id)
@@ -213,8 +218,9 @@ pub async fn reset_account_sessions(
         Err(SessionError::RedisPoolError)
     })?;
 
+    let key = format!("{}:{}", ACCOUNT_SESSIONS_KEY_PREFIX, account_id);
     let list = redis_conn
-        .lrange::<String, Vec<String>>(account_id.to_string(), 0, -1)
+        .lrange::<String, Vec<String>>(key.clone(), 0, -1)
         .await
         .or_else(|err| {
             error!("Failed to get list of sessions for account, err: {}", err);
@@ -229,16 +235,13 @@ pub async fn reset_account_sessions(
             Err(SessionError::SessionDeletion)
         })?;
 
-    redis_conn
-        .del::<String, ()>(account_id.to_string())
-        .await
-        .or_else(|err| {
-            error!(
-                "Failed to delete list of sessions for account, err: {}",
-                err
-            );
-            Err(SessionError::SessionDeletion)
-        })?;
+    redis_conn.del::<String, ()>(key).await.or_else(|err| {
+        error!(
+            "Failed to delete list of sessions for account, err: {}",
+            err
+        );
+        Err(SessionError::SessionDeletion)
+    })?;
 
     Ok(())
 }
