@@ -1,3 +1,12 @@
+use rocket::{http::Status, State};
+use serde::Serialize;
+use sqlx::Pool;
+
+use crate::{
+    api::response::{ErrMsg, ResponseStatus},
+    db::DB,
+};
+
 #[derive(Serialize, Clone)]
 pub struct AccessTokenResponse {
     access_token: String,
@@ -14,8 +23,14 @@ pub async fn get_access_token(
     code: String,
     client_id: String,
     client_secret: String,
+    grant_type: String,
 ) -> ResponseStatus<AccessTokenResponse> {
     if grant_type != GRANT_TYPE_AUTHORIZATION_CODE {
         return ResponseStatus::err(Status::UnprocessableEntity, ErrMsg::InvalidGrantType);
     }
+
+    ResponseStatus::ok(AccessTokenResponse {
+        access_token: String::new(),
+        expires_in: 123,
+    })
 }

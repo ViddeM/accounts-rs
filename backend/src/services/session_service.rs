@@ -1,14 +1,18 @@
 use chrono::{DateTime, Duration, Utc};
-use mobc_redis::redis::{AsyncCommands, FromRedisValue, ToRedisArgs};
+use mobc::Pool;
+use mobc_redis::redis::AsyncCommands;
 use mobc_redis::RedisConnectionManager;
 use rand::distributions::Alphanumeric;
 use rand::{thread_rng, Rng};
 use rocket::http::{Cookie, CookieJar, Status};
 use rocket::request::{FromRequest, Request};
 use rocket::State;
-use sqlx::types::uuid::Uuid;
+use serde::{Deserialize, Serialize};
+use sqlx::types::Uuid;
 
 use crate::models::login_details::LoginDetails;
+
+use super::redis_service;
 
 const SESSION_COOKIE_KEY: &str = "accounts_rs_session";
 const SESSION_ID_LENGTH: usize = 48;
@@ -21,74 +25,30 @@ pub struct Session {
     pub account_id: Uuid,
 }
 
-impl ToRedisArgs for Session {
-    fn write_redis_args<W>(&self, out: &mut W)
-    where
-        W: ?Sized + mobc_redis::redis::RedisWrite,
-    {
-        let data = format!(
-            "ID={}::EXPIRATION={}::ACCOUNT_ID={}",
-            self.id,
-            self.expiration.to_string(),
-            self.account_id
-        );
+#[derive(Deserialize, Serialize, Debug)]
+struct RedisSession {
+    pub id: String,
+    pub expiration: DateTime<Utc>,
+    pub account_id: uuid::Uuid,
+}
 
-        out.write_arg(data.as_bytes());
+impl From<RedisSession> for Session {
+    fn from(s: RedisSession) -> Self {
+        Self {
+            id: s.id,
+            expiration: s.expiration,
+            account_id: Uuid::from_u128(s.account_id.as_u128()),
+        }
     }
 }
 
-macro_rules! invalid_type_error {
-    ($v:expr, $det:expr) => {{
-        mobc_redis::redis::RedisError::from((
-            mobc_redis::redis::ErrorKind::TypeError,
-            "Response was of incompatible type",
-            format!("{:?} (response was {:?})", $det, $v),
-        ))
-    }};
-}
-
-impl FromRedisValue for Session {
-    fn from_redis_value(v: &mobc_redis::redis::Value) -> mobc_redis::redis::RedisResult<Self> {
-        let vals = String::from_redis_value(v)?
-            .as_str()
-            .split("::")
-            .map(|v| {
-                let (a, b) = v.split_once("=").ok_or(invalid_type_error!("Tuple", v))?;
-                Ok((String::from(a), String::from(b)))
-            })
-            .collect::<mobc_redis::redis::RedisResult<Vec<(String, String)>>>()?;
-
-        let mut id: Option<String> = None;
-        let mut expiration: Option<DateTime<Utc>> = None;
-        let mut account_id: Option<Uuid> = None;
-        for (k, v) in vals.into_iter() {
-            match k.as_str() {
-                "ID" => {
-                    id = Some(String::from(v));
-                }
-                "EXPIRATION" => {
-                    let expiration_date: DateTime<Utc> = v
-                        .parse()
-                        .ok()
-                        .ok_or(invalid_type_error!("DateTime<Utc>", v))?;
-                    expiration = Some(expiration_date);
-                }
-                "ACCOUNT_ID" => {
-                    account_id = Some(
-                        Uuid::parse_str(&v)
-                            .ok()
-                            .ok_or(invalid_type_error!("Uuid", v))?,
-                    )
-                }
-                _ => { /* Ignore unexpected keys */ }
-            }
+impl From<Session> for RedisSession {
+    fn from(s: Session) -> Self {
+        Self {
+            id: s.id,
+            expiration: s.expiration,
+            account_id: uuid::Uuid::from_u128(s.account_id.as_u128()),
         }
-
-        Ok(Session {
-            id: id.expect("Failed to retrieve ID for session from cache"),
-            expiration: expiration.expect("Failed to retrieve expiration for session from cache"),
-            account_id: account_id.expect("Failed to retrieve account_id for session from cache"),
-        })
     }
 }
 
@@ -139,44 +99,33 @@ impl<'r> FromRequest<'r> for Session {
             }
         };
 
-        let mut redis_conn = match redis_pool.get().await {
-            Ok(conn) => conn,
-            Err(e) => {
-                error!("Failed to get connection to redis DB, err: {}", e);
-                return rocket::request::Outcome::Failure((
-                    Status::InternalServerError,
-                    SessionError::RedisPoolError,
-                ));
-            }
-        };
-
-        let session = match redis_conn
-            .get::<String, Option<Session>>(session_id.clone())
-            .await
-        {
-            Ok(Some(s)) => s,
-            Ok(None) => {
-                error!("Session was not found in the cache, this should generally not happen");
-                // Delete the invalid cookie and require re-login
-                delete_session_cookie(request.cookies()).await;
-                return rocket::request::Outcome::Failure((
-                    Status::Unauthorized,
-                    SessionError::MissingCookie,
-                ));
-            }
-            Err(err) => {
-                error!("Failed to retrieve session from redis, err: {}", err);
-                return rocket::request::Outcome::Failure((
-                    Status::InternalServerError,
-                    SessionError::RedisPoolError,
-                ));
-            }
-        };
+        let session: Session =
+            match redis_service::redis_get::<Option<RedisSession>>(redis_pool, session_id.clone())
+                .await
+            {
+                Ok(Some(s)) => s.into(),
+                Ok(None) => {
+                    error!("Session was not found in the cache, this should generally not happen");
+                    // Delete the invalid cookie and require re-login
+                    delete_session_cookie(request.cookies()).await;
+                    return rocket::request::Outcome::Failure((
+                        Status::Unauthorized,
+                        SessionError::MissingCookie,
+                    ));
+                }
+                Err(err) => {
+                    error!("Failed to retrieve session from redis, err: {}", err);
+                    return rocket::request::Outcome::Failure((
+                        Status::InternalServerError,
+                        SessionError::RedisPoolError,
+                    ));
+                }
+            };
 
         let now = Utc::now();
         if session.expiration < now {
             // Session has expired, remove it from redis and cookie
-            if let Err(e) = delete_session_from_cache(&mut redis_conn, session_id.clone()).await {
+            if let Err(e) = redis_service::redis_del(redis_pool, session_id.clone()).await {
                 error!(
                     "Failed to delete expired session (id = {}) from redis, err: {}",
                     session_id, e
@@ -204,11 +153,6 @@ pub async fn set_session(
     login_details: &LoginDetails,
     cookies: &CookieJar<'_>,
 ) -> Result<(), SessionError> {
-    let mut redis_conn = redis_pool.get().await.or_else(|err| {
-        error!("Failed to retrieve redis pool, err: {}", err);
-        Err(SessionError::RedisPoolError)
-    })?;
-
     let session_id: String = thread_rng()
         .sample_iter(&Alphanumeric)
         .take(SESSION_ID_LENGTH)
@@ -220,34 +164,29 @@ pub async fn set_session(
         .checked_add_signed(time_until_expiration)
         .ok_or(SessionError::ExpirationTimeGeneration)?;
 
-    let session = Session {
+    let session: RedisSession = Session {
         id: session_id.clone(),
         expiration: expiration_time,
         account_id: login_details.account_id,
-    };
+    }
+    .into();
 
-    redis_conn
-        .set_ex::<String, Session, String>(
-            session_id.clone(),
-            session,
-            time_until_expiration.num_seconds() as usize,
-        )
-        .await
-        .or_else(|err| {
-            error!("Failed to insert session in the redis cache, err: {}", err);
-            Err(SessionError::CacheInsertion)
-        })?;
+    redis_service::redis_set(
+        redis_pool,
+        session_id.clone(),
+        session,
+        time_until_expiration.num_seconds() as usize,
+    )
+    .await
+    .or(Err(SessionError::CacheInsertion))?;
 
-    redis_conn
-        .lpush::<String, String, usize>(login_details.account_id.to_string(), session_id.clone())
-        .await
-        .or_else(|err| {
-            error!(
-                "Failed to update list of sessions for account in redis, err: {}",
-                err
-            );
-            Err(SessionError::CacheInsertion)
-        })?;
+    redis_service::redis_push(
+        redis_pool,
+        login_details.account_id.to_string(),
+        session_id.clone(),
+    )
+    .await
+    .or(Err(SessionError::CacheInsertion))?;
 
     cookies.add_private(
         Cookie::build(SESSION_COOKIE_KEY, session_id)
@@ -258,16 +197,6 @@ pub async fn set_session(
     Ok(())
 }
 
-pub async fn delete_session_from_cache(
-    redis_conn: &mut mobc::Connection<RedisConnectionManager>,
-    session_id: String,
-) -> Result<(), SessionError> {
-    redis_conn
-        .del::<String, ()>(session_id)
-        .await
-        .or(Err(SessionError::SessionDeletion))
-}
-
 pub async fn delete_session_cookie<'r>(cookie_jar: &CookieJar<'r>) {
     if let Some(cookie) = cookie_jar.get_private(SESSION_COOKIE_KEY) {
         cookie_jar.remove_private(cookie);
@@ -276,9 +205,14 @@ pub async fn delete_session_cookie<'r>(cookie_jar: &CookieJar<'r>) {
 }
 
 pub async fn reset_account_sessions(
-    redis_conn: &mut mobc::Connection<RedisConnectionManager>,
+    redis_pool: &State<Pool<RedisConnectionManager>>,
     account_id: Uuid,
 ) -> Result<(), SessionError> {
+    let mut redis_conn = redis_pool.get().await.or_else(|err| {
+        error!("Failed to get redis connection from pool, err {}", err);
+        Err(SessionError::RedisPoolError)
+    })?;
+
     let list = redis_conn
         .lrange::<String, Vec<String>>(account_id.to_string(), 0, -1)
         .await

@@ -7,6 +7,7 @@ pub mod login_service;
 pub mod oauth2_authorization_service;
 pub mod oauth_client_service;
 pub mod password_service;
+pub mod redis_service;
 pub mod reset_password_service;
 pub mod session_service;
 pub mod user_service;

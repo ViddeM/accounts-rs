@@ -183,12 +183,7 @@ pub async fn update_password(
     reset_password_repository::delete_password_reset(&mut transaction, password_reset_code.id)
         .await?;
 
-    let mut redis_conn = redis_pool.get().await.or_else(|err| {
-        error!("Failed to retrieve redis connection, err {}", err);
-        Err(ResetPasswordError::Internal)
-    })?;
-
-    session_service::reset_account_sessions(&mut redis_conn, account.account_id)
+    session_service::reset_account_sessions(redis_pool, account.account_id)
         .await
         .or_else(|err| {
             error!("Failed to reset account sessions, err: {}", err);

@@ -84,6 +84,7 @@ async fn rocket() -> _ {
                 api::oauth_client::post_new_client,
                 api::oauth_client::delete_client,
                 api::oauth::authorize::get_authorization,
+                api::oauth::access_token::get_access_token,
             ],
         )
         .mount("/api/public", FileServer::from("static/public"))
