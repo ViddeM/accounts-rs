@@ -1,10 +1,14 @@
+use mobc_redis::RedisConnectionManager;
 use rocket::{http::Status, response::Redirect, State};
 use sqlx::Pool;
 
 use crate::{
     api::response::{ErrMsg, ResponseStatus},
     db::DB,
-    services::{oauth2_authorization_service, session_service::Session},
+    services::{
+        oauth2_authorization_service::{self, Oauth2Error},
+        session_service::Session,
+    },
 };
 
 const RESPONSE_TYPE_CODE: &str = "code";
@@ -13,6 +17,7 @@ const RESPONSE_TYPE_CODE: &str = "code";
 #[get("/authorize?<response_type>&<client_id>&<redirect_uri>&<state>")]
 pub async fn get_authorization(
     db_pool: &State<Pool<DB>>,
+    redis_pool: &State<mobc::Pool<RedisConnectionManager>>,
     response_type: String,
     client_id: String,
     redirect_uri: String,
@@ -26,15 +31,33 @@ pub async fn get_authorization(
         ));
     }
 
-    let url =
-        match oauth2_authorization_service::get_auth_token(db_pool, client_id, redirect_uri, state)
-            .await
-        {
-            Ok(url) => url,
-            Err(err) => {
-                panic!("FUCK FUCK, err: {}", err);
-            }
-        };
+    let url = match oauth2_authorization_service::get_auth_token(
+        db_pool,
+        redis_pool,
+        client_id.clone(),
+        redirect_uri,
+        state,
+    )
+    .await
+    {
+        Ok(url) => url,
+        Err(Oauth2Error::NoClientWithId) => {
+            error!("No client with id '{}'", client_id);
+            return Err(ResponseStatus::err(
+                Status::BadRequest,
+                ErrMsg::NoOauthClientWithId,
+            ));
+        }
+        Err(Oauth2Error::InvalidRedirectUri) => {
+            return Err(ResponseStatus::err(
+                Status::BadRequest,
+                ErrMsg::InvalidRedirectUri,
+            ))
+        }
+        Err(err) => {
+            panic!("FUCK FUCK, err: {}", err);
+        }
+    };
 
     Ok(Redirect::found(url))
 }

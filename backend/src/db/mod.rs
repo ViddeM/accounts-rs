@@ -3,7 +3,6 @@ use sqlx::{Pool, Postgres, Transaction};
 
 pub mod account_repository;
 pub mod activation_code_repository;
-pub mod authorization_code_repository;
 pub mod login_details_repository;
 pub mod login_provider_repository;
 pub mod oauth_client_repository;

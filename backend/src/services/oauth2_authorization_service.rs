@@ -1,47 +1,46 @@
+use mobc_redis::RedisConnectionManager;
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use rocket::State;
 use sqlx::Pool;
 
 use crate::{
-    db::{authorization_code_repository, new_transaction, oauth_client_repository, DB},
+    db::{new_transaction, oauth_client_repository, DB},
     util::accounts_error::AccountsError,
 };
 
+use super::redis_service::{self, RedisError};
+
 #[derive(Debug, thiserror::Error)]
 pub enum Oauth2Error {
-    #[error("An internal error occured")]
-    Internal,
     #[error("There is no client with that client_id")]
     NoClientWithId,
     #[error("Redirect uri doesn't match client")]
     InvalidRedirectUri,
     #[error("Invalid client secret or redirect uri provided")]
     InvalidClient,
-}
-
-impl From<sqlx::Error> for Oauth2Error {
-    fn from(_: sqlx::Error) -> Self {
-        Oauth2Error::Internal
-    }
-}
-
-impl From<AccountsError> for Oauth2Error {
-    fn from(_: AccountsError) -> Self {
-        Oauth2Error::Internal
-    }
+    #[error("Sqlx error")]
+    SqlxError(#[from] sqlx::Error),
+    #[error("Accounts error")]
+    AccountsError(#[from] AccountsError),
+    #[error("Redis error")]
+    RedisError(#[from] RedisError),
 }
 
 const AUTH_TOKEN_LENGTH: usize = 48;
+const AUTHORIZATION_KEY_REDIS_PREFIX: &str = "authorization_codes";
+// 30 minutes
+const AUTHORIZATION_CODE_EXPIRATION_SECONDS: usize = 30 * 60;
 
 pub async fn get_auth_token(
     db_pool: &State<Pool<DB>>,
+    redis_pool: &State<mobc::Pool<RedisConnectionManager>>,
     client_id: String,
     redirect_uri: String,
     state: String,
 ) -> Result<String, Oauth2Error> {
     let mut transaction = new_transaction(db_pool).await?;
 
-    let client = oauth_client_repository::get_by_client_id(&mut transaction, client_id)
+    let client = oauth_client_repository::get_by_client_id(&mut transaction, client_id.clone())
         .await?
         .ok_or(Oauth2Error::NoClientWithId)?;
 
@@ -53,19 +52,26 @@ pub async fn get_auth_token(
         return Err(Oauth2Error::InvalidRedirectUri);
     }
 
-    let auth_token = thread_rng()
+    let code: String = thread_rng()
         .sample_iter(&Alphanumeric)
         .take(AUTH_TOKEN_LENGTH)
         .map(char::from)
         .collect();
 
-    let auth_code = authorization_code_repository::insert(&mut transaction, auth_token).await?;
+    let key = format!("{}:{}", AUTHORIZATION_KEY_REDIS_PREFIX, code);
+    redis_service::redis_set(
+        redis_pool,
+        key,
+        client_id,
+        AUTHORIZATION_CODE_EXPIRATION_SECONDS,
+    )
+    .await?;
 
     transaction.commit().await?;
 
     Ok(format!(
         "{}?state={}&code={}",
-        client.redirect_uri, state, auth_code.token
+        client.redirect_uri, state, code
     ))
 }
 
