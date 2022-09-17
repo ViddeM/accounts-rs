@@ -54,3 +54,13 @@ VALUES(
         '6B2BB4DC9D60E687E63787024A7DB306C3B0FFF7B0A938C4E19C4E79E4AE48A3A59462A12DEA5EC874F0205C71440EF229CFBEDA0C1480C13781FC7CD2F1C91014E888813B5C04006E65808481221CE70D08D89921FD99EC3E13D813AA1BC70920BD907576C7A7E6C2065313B313B9D838',
         '8316690366BFA8B8CE670987'
     );
+
+-- Insert oauth client with client_id: 'client_id' and client_secret: 'secret'
+INSERT INTO oauth_client(id, client_id, client_secret, client_name, redirect_uri)
+VALUES (
+    'a58b3dae-91d9-46a3-971b-a6cda3e8f3f5',
+    'client_id',
+    'secret',
+    'Mock client name',
+    'http://localhost:3001/auth/callback'
+)
