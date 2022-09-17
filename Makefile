@@ -1,4 +1,4 @@
-.PHONY: mock
+.PHONY: mock, migrate, clean, reset
 
 DB_CONTAINER_NAME=accounts_rs-db-1
 
@@ -10,3 +10,8 @@ migrate:
 
 clean:
 	echo 'DROP SCHEMA public CASCADE; CREATE SCHEMA public;' | docker exec -i $(DB_CONTAINER_NAME) psql -U accounts_rs accounts_rs
+
+reset:
+	make clean
+	make migrate
+	make mock
