@@ -35,13 +35,13 @@ pub async fn get_me(
             },
             authority: acc.authority,
         },
-        Err(UserError::Internal) => {
-            error!("An internal error occured whilst retrieving me");
-            return ResponseStatus::internal_err();
-        }
         Err(UserError::AccountNotFound) => {
             error!("Unable to find the account in the session!");
             // Here we should probably clear the session and require re-authorization, but for now return an error
+            return ResponseStatus::internal_err();
+        }
+        Err(err) => {
+            error!("An error occured whilst retrieving me, err: {:?}", err);
             return ResponseStatus::internal_err();
         }
     };
