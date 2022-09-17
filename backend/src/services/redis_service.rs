@@ -36,6 +36,35 @@ where
     })?)
 }
 
+pub async fn redis_get_option<T>(
+    redis_pool: &State<Pool<RedisConnectionManager>>,
+    key: String,
+) -> Result<Option<T>, RedisError>
+where
+    T: DeserializeOwned,
+{
+    let mut redis_conn = redis_pool.get().await.or_else(|err| {
+        error!("Failed to get redis connection from pool, err {}", err);
+        Err(RedisError::Internal)
+    })?;
+
+    match redis_conn
+        .get::<String, Option<String>>(key)
+        .await
+        .or_else(|err| {
+            error!("Failed to get from redis, err {}", err);
+            Err(RedisError::Redis)
+        })? {
+        Some(raw_result) => Ok(Some(serde_json::from_str::<T>(&raw_result).or_else(
+            |err| {
+                error!("Failed to parse json value from redis, err {}", err);
+                Err(RedisError::Serde)
+            },
+        )?)),
+        None => Ok(None),
+    }
+}
+
 pub async fn redis_set<T>(
     redis_pool: &State<Pool<RedisConnectionManager>>,
     key: String,

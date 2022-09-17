@@ -104,7 +104,7 @@ impl<'r> FromRequest<'r> for Session {
 
         let key = format!("{}:{}", SESSIONS_KEY_PREFIX, session_id);
         let session: Session =
-            match redis_service::redis_get::<Option<RedisSession>>(redis_pool, key).await {
+            match redis_service::redis_get_option::<RedisSession>(redis_pool, key).await {
                 Ok(Some(s)) => s.into(),
                 Ok(None) => {
                     error!("Session was not found in the cache, this should generally not happen");
