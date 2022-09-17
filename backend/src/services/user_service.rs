@@ -9,22 +9,12 @@ use crate::{
 
 #[derive(Debug, thiserror::Error)]
 pub enum UserError {
-    #[error("An internal error occured")]
-    Internal,
     #[error("The account doesn't exist")]
     AccountNotFound,
-}
-
-impl From<sqlx::Error> for UserError {
-    fn from(_: sqlx::Error) -> Self {
-        UserError::Internal
-    }
-}
-
-impl From<AccountsError> for UserError {
-    fn from(_: AccountsError) -> Self {
-        UserError::Internal
-    }
+    #[error("Sqlx error")]
+    SqlxError(#[from] sqlx::Error),
+    #[error("Accounts error")]
+    AccountsError(#[from] AccountsError),
 }
 
 pub async fn get_me(
