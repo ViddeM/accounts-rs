@@ -45,7 +45,7 @@ pub async fn get_authorization(
             error!("No client with id '{}'", client_id);
             return Err(ResponseStatus::err(
                 Status::BadRequest,
-                ErrMsg::NoOauthClientWithId,
+                ErrMsg::InvalidClientId,
             ));
         }
         Err(Oauth2Error::InvalidRedirectUri) => {

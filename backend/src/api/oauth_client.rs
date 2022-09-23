@@ -105,7 +105,7 @@ pub async fn delete_client(
             ResponseStatus::err(Status::BadRequest, ErrMsg::InvalidUuid)
         }
         Err(OauthClientError::ClientIdNotFound) => {
-            ResponseStatus::err(Status::NotFound, ErrMsg::NoOauthClientWithId)
+            ResponseStatus::err(Status::NotFound, ErrMsg::InvalidClientId)
         }
         Err(_) => ResponseStatus::internal_err(),
     }

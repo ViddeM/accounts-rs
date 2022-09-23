@@ -12,12 +12,16 @@ use super::redis_service::{self, RedisError};
 
 #[derive(Debug, thiserror::Error)]
 pub enum Oauth2Error {
+    #[error("Client ID did not match the provided code")]
+    InvalidClientId,
     #[error("There is no client with that client_id")]
     NoClientWithId,
     #[error("Redirect uri doesn't match client")]
     InvalidRedirectUri,
-    #[error("Invalid client secret or redirect uri provided")]
-    InvalidClient,
+    #[error("Invalid client secret")]
+    InvalidClientSecret,
+    #[error("Invalid authorization code provided")]
+    InvalidCode,
     #[error("Sqlx error")]
     SqlxError(#[from] sqlx::Error),
     #[error("Accounts error")]
@@ -77,6 +81,7 @@ pub async fn get_auth_token(
 
 pub async fn get_access_token(
     db_pool: &State<Pool<DB>>,
+    redis_pool: &State<mobc::Pool<RedisConnectionManager>>,
     client_id: String,
     client_secret: String,
     redirect_uri: String,
@@ -84,12 +89,37 @@ pub async fn get_access_token(
 ) -> Result<(), Oauth2Error> {
     let mut transaction = new_transaction(db_pool).await?;
 
+    let key = format!("{}:{}", AUTHORIZATION_KEY_REDIS_PREFIX, code);
+    let code_client_id: String = redis_service::redis_get_option(redis_pool, key)
+        .await?
+        .ok_or(Oauth2Error::InvalidCode)?;
+
+    if code_client_id != client_id {
+        error!(
+            "Stored clientId for code(code={}) {} did not match provided client id {}",
+            code, code_client_id, client_id
+        );
+        return Err(Oauth2Error::NoClientWithId);
+    }
+
     let client = oauth_client_repository::get_by_client_id(&mut transaction, client_id)
         .await?
         .ok_or(Oauth2Error::NoClientWithId)?;
 
-    if client.client_secret != client_secret || client.redirect_uri != redirect_uri {
-        return Err(Oauth2Error::InvalidClient)?;
+    if client.redirect_uri != redirect_uri {
+        error!(
+            "Received redirect_uri ({}) did not match stored redirect_uri ({}) for client {}",
+            redirect_uri, client.redirect_uri, client_id
+        );
+        return Err(Oauth2Error::InvalidRedirectUri);
+    }
+
+    if client.client_secret != client_secret {
+        error!(
+            "Received client_secret did not match stored client_secret for client {}",
+            client_id
+        );
+        return Err(Oauth2Error::InvalidClientSecret);
     }
 
     transaction.commit().await?;

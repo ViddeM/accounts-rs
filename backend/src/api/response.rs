@@ -67,9 +67,10 @@ pub enum ErrMsg {
     Unauthorized,
     InvalidUuid,
     OauthClientNameTaken,
-    NoOauthClientWithId,
+    InvalidClientId,
     InvalidResponseType,
     InvalidGrantType,
+    InvalidClientSecret,
     InvalidRedirectUri,
 }
 
