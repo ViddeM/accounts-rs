@@ -44,7 +44,7 @@ pub async fn get_auth_token(
 ) -> Result<String, Oauth2Error> {
     let mut transaction = new_transaction(db_pool).await?;
 
-    let client = oauth_client_repository::get_by_client_id(&mut transaction, client_id.clone())
+    let client = oauth_client_repository::get_by_client_id(&mut transaction, &client_id)
         .await?
         .ok_or(Oauth2Error::NoClientWithId)?;
 
@@ -102,7 +102,7 @@ pub async fn get_access_token(
         return Err(Oauth2Error::NoClientWithId);
     }
 
-    let client = oauth_client_repository::get_by_client_id(&mut transaction, client_id)
+    let client = oauth_client_repository::get_by_client_id(&mut transaction, &client_id)
         .await?
         .ok_or(Oauth2Error::NoClientWithId)?;
 

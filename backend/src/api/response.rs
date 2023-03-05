@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
 
 use rocket::http::Status;
@@ -10,6 +11,7 @@ use serde_json::json;
 pub struct ResponseStatus<T: Serialize + Clone> {
     pub status: Status,
     pub response_data: ResponseData<T>,
+    pub headers: HashMap<&'static str, &'static str>,
 }
 
 #[derive(Clone, Serialize)]
@@ -20,6 +22,7 @@ impl<T: Serialize + Clone> ResponseStatus<T> {
         ResponseStatus {
             status: Status::NoContent,
             response_data: ResponseData::Success(NoContent {}),
+            headers: HashMap::new(),
         }
     }
 
@@ -27,6 +30,19 @@ impl<T: Serialize + Clone> ResponseStatus<T> {
         ResponseStatus {
             status: Status::Ok,
             response_data: ResponseData::Success(data),
+            headers: HashMap::new(),
+        }
+    }
+
+    pub fn ok_with(
+        data: T,
+        status: Status,
+        map: HashMap<&'static str, &'static str>,
+    ) -> ResponseStatus<T> {
+        ResponseStatus {
+            status: status,
+            response_data: ResponseData::Success(data),
+            headers: map,
         }
     }
 
@@ -34,6 +50,7 @@ impl<T: Serialize + Clone> ResponseStatus<T> {
         ResponseStatus {
             status,
             response_data: ResponseData::Failure(msg),
+            headers: HashMap::new(),
         }
     }
 
@@ -41,6 +58,7 @@ impl<T: Serialize + Clone> ResponseStatus<T> {
         ResponseStatus {
             status: Status::InternalServerError,
             response_data: ResponseData::Failure(ErrMsg::InternalServerError),
+            headers: HashMap::new(),
         }
     }
 }
@@ -72,6 +90,7 @@ pub enum ErrMsg {
     InvalidGrantType,
     InvalidClientSecret,
     InvalidRedirectUri,
+    InvalidCode,
 }
 
 impl Display for ErrMsg {
@@ -96,8 +115,12 @@ impl<'r, T: Serialize + Clone> Responder<'r, 'static> for ResponseStatus<T> {
             ResponseData::Failure(err_msg) => json!({ "error_msg": err_msg }),
         };
 
-        Response::build_from(response_data.respond_to(request)?)
-            .status(self.status)
-            .ok()
+        let mut response = Response::build_from(response_data.respond_to(request)?);
+        response.status(self.status);
+        for (name, val) in self.headers.into_iter() {
+            response.raw_header(name, val);
+        }
+
+        response.ok()
     }
 }

@@ -76,7 +76,7 @@ RETURNING *
 
 pub async fn get_by_client_id(
     transaction: &mut Transaction<'_, DB>,
-    client_id: String,
+    client_id: &str,
 ) -> AccountsResult<Option<OauthClient>> {
     Ok(sqlx::query_as!(
         OauthClient,
