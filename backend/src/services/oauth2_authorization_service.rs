@@ -46,7 +46,7 @@ const AUTHORIZATION_CODE_EXPIRATION_SECONDS: usize = 5 * 60;
 const ACCESS_TOKEN_LENGTH: usize = 128;
 const ACCESS_TOKEN_KEY_REDIS_PREFIX: &str = "access_tokens";
 // 1 hour
-const ACCESS_TOKEN_EXPIRATION_SECONDS: i64 = 1 * 60 * 60;
+const ACCESS_TOKEN_EXPIRATION_SECONDS: i64 = 60 * 60;
 
 #[derive(Deserialize, Serialize, Debug)]
 struct AuthToken {
@@ -209,5 +209,5 @@ async fn generate_access_token(
     .await
     .or(Err(Oauth2Error::CacheInsertion))?;
 
-    return Ok(access_token);
+    Ok(access_token)
 }

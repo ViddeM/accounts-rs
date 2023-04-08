@@ -20,20 +20,20 @@ pub async fn redis_get<T>(
 where
     T: DeserializeOwned,
 {
-    let mut redis_conn = redis_pool.get().await.or_else(|err| {
+    let mut redis_conn = redis_pool.get().await.map_err(|err| {
         error!("Failed to get redis connection from pool, err {}", err);
-        Err(RedisError::Internal)
+        RedisError::Internal
     })?;
 
-    let raw_result = redis_conn.get::<String, String>(key).await.or_else(|err| {
+    let raw_result = redis_conn.get::<String, String>(key).await.map_err(|err| {
         error!("Failed to get from redis, err {}", err);
-        Err(RedisError::Redis)
+        RedisError::Redis
     })?;
 
-    Ok(serde_json::from_str::<T>(&raw_result).or_else(|err| {
+    serde_json::from_str::<T>(&raw_result).map_err(|err| {
         error!("Failed to parse json value from redis, err {}", err);
-        Err(RedisError::Serde)
-    })?)
+        RedisError::Serde
+    })
 }
 
 pub async fn redis_get_option<T>(
@@ -43,22 +43,22 @@ pub async fn redis_get_option<T>(
 where
     T: DeserializeOwned,
 {
-    let mut redis_conn = redis_pool.get().await.or_else(|err| {
+    let mut redis_conn = redis_pool.get().await.map_err(|err| {
         error!("Failed to get redis connection from pool, err {}", err);
-        Err(RedisError::Internal)
+        RedisError::Internal
     })?;
 
     match redis_conn
         .get::<String, Option<String>>(key)
         .await
-        .or_else(|err| {
+        .map_err(|err| {
             error!("Failed to get from redis, err {}", err);
-            Err(RedisError::Redis)
+            RedisError::Redis
         })? {
-        Some(raw_result) => Ok(Some(serde_json::from_str::<T>(&raw_result).or_else(
+        Some(raw_result) => Ok(Some(serde_json::from_str::<T>(&raw_result).map_err(
             |err| {
                 error!("Failed to parse json value from redis, err {}", err);
-                Err(RedisError::Serde)
+                RedisError::Serde
             },
         )?)),
         None => Ok(None),
@@ -74,24 +74,24 @@ pub async fn redis_set<T>(
 where
     T: Serialize,
 {
-    let mut redis_conn = redis_pool.get().await.or_else(|err| {
+    let mut redis_conn = redis_pool.get().await.map_err(|err| {
         error!("Failed to get redis connection from pool, err {}", err);
-        Err(RedisError::Internal)
+        RedisError::Internal
     })?;
 
     redis_conn
         .set_ex::<String, String, String>(
             key,
-            serde_json::to_string(&val).or_else(|err| {
+            serde_json::to_string(&val).map_err(|err| {
                 error!("Failed to serialize value, err {}", err);
-                Err(RedisError::Serde)
+                RedisError::Serde
             })?,
             expiration_seconds,
         )
         .await
-        .or_else(|err| {
+        .map_err(|err| {
             error!("Failed to insert value to redis, err {}", err);
-            Err(RedisError::Redis)
+            RedisError::Redis
         })?;
 
     Ok(())
@@ -102,17 +102,17 @@ pub async fn redis_push(
     key: String,
     value: String,
 ) -> Result<(), RedisError> {
-    let mut redis_conn = redis_pool.get().await.or_else(|err| {
+    let mut redis_conn = redis_pool.get().await.map_err(|err| {
         error!("Failed to get redis connection from pool, err {}", err);
-        Err(RedisError::Internal)
+        RedisError::Internal
     })?;
 
     redis_conn
         .lpush::<String, String, usize>(key, value)
         .await
-        .or_else(|err| {
+        .map_err(|err| {
             error!("Failed to push value to redis, err {}", err);
-            Err(RedisError::Redis)
+            RedisError::Redis
         })?;
 
     Ok(())
@@ -122,14 +122,14 @@ pub async fn redis_del(
     redis_pool: &State<Pool<RedisConnectionManager>>,
     key: String,
 ) -> Result<(), RedisError> {
-    let mut redis_conn = redis_pool.get().await.or_else(|err| {
+    let mut redis_conn = redis_pool.get().await.map_err(|err| {
         error!("Failed to get redis connection from pool, err {}", err);
-        Err(RedisError::Internal)
+        RedisError::Internal
     })?;
 
-    redis_conn.del::<String, ()>(key).await.or_else(|err| {
+    redis_conn.del::<String, ()>(key).await.map_err(|err| {
         error!("Failed to delete value from redis, err {}", err);
-        Err(RedisError::Redis)
+        RedisError::Redis
     })?;
 
     Ok(())

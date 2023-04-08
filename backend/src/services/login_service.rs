@@ -93,7 +93,7 @@ pub async fn validate_login(
     .await?;
 
     transaction.commit().await?;
-    return Ok(login_details);
+    Ok(login_details)
 }
 
 /// Generate a time until which the account will be locked

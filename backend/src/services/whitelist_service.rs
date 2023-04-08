@@ -32,9 +32,9 @@ pub async fn get_whitelisted_emails(
 
     let emails = whitelist_repository::get_all_whitelisted_emails(&mut transaction)
         .await
-        .or_else(|err| {
+        .map_err(|err| {
             error!("Failed to get whitelisted emails, err: {}", err);
-            Err(err)
+            err
         })?;
 
     Ok(emails)
@@ -48,9 +48,9 @@ pub async fn add_to_whitelist(
 
     let email = whitelist_repository::add_email_to_local_whitelist(&mut transaction, email)
         .await
-        .or_else(|err| {
+        .map_err(|err| {
             error!("Failed to insert email into local whitelist, err {}", err);
-            Err(err)
+            err
         })?;
 
     transaction.commit().await?;
@@ -66,9 +66,9 @@ pub async fn delete_from_whitelist(
 
     whitelist_repository::remove_email(&mut transaction, email)
         .await
-        .or_else(|err| {
+        .map_err(|err| {
             error!("Failed to delete email from whitelist, err {}", err);
-            Err(err)
+            err
         })?;
 
     transaction.commit().await?;

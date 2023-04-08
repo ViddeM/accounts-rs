@@ -40,10 +40,8 @@ async fn rocket() -> _ {
     db::init(&db_pool).await.expect("Failed to initialize db");
 
     // Setup Redis cache
-    let redis_client = redis::Client::open(config.redis_url.clone()).expect(&format!(
-        "Failed to connect to redis on URL {}",
-        config.redis_url
-    ));
+    let redis_client = redis::Client::open(config.redis_url.clone())
+        .unwrap_or_else(|_| panic!("Failed to connect to redis on URL {}", config.redis_url));
     let redis_manager = RedisConnectionManager::new(redis_client);
     let redis_pool = Pool::builder()
         .max_open(MAX_REDIS_CONNECTONS)

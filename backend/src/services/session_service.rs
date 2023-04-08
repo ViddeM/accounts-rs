@@ -214,34 +214,34 @@ pub async fn reset_account_sessions(
     redis_pool: &State<Pool<RedisConnectionManager>>,
     account_id: Uuid,
 ) -> Result<(), SessionError> {
-    let mut redis_conn = redis_pool.get().await.or_else(|err| {
+    let mut redis_conn = redis_pool.get().await.map_err(|err| {
         error!("Failed to get redis connection from pool, err {}", err);
-        Err(SessionError::RedisPoolError)
+        SessionError::RedisPoolError
     })?;
 
     let key = format!("{}:{}", ACCOUNT_SESSIONS_KEY_PREFIX, account_id);
     let list = redis_conn
         .lrange::<String, Vec<String>>(key.clone(), 0, -1)
         .await
-        .or_else(|err| {
+        .map_err(|err| {
             error!("Failed to get list of sessions for account, err: {}", err);
-            Err(SessionError::CacheReadError)
+            SessionError::CacheReadError
         })?;
 
     redis_conn
         .del::<Vec<String>, usize>(list)
         .await
-        .or_else(|err| {
+        .map_err(|err| {
             error!("Failed to delete sessions for account, err: {}", err);
-            Err(SessionError::SessionDeletion)
+            SessionError::SessionDeletion
         })?;
 
-    redis_conn.del::<String, ()>(key).await.or_else(|err| {
+    redis_conn.del::<String, ()>(key).await.map_err(|err| {
         error!(
             "Failed to delete list of sessions for account, err: {}",
             err
         );
-        Err(SessionError::SessionDeletion)
+        SessionError::SessionDeletion
     })?;
 
     Ok(())

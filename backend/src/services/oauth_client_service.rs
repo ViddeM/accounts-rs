@@ -41,12 +41,12 @@ pub async fn get_oauth_clients(
     let mut transaction = new_transaction(db_pool).await?;
 
     match oauth_client_repository::get_all(&mut transaction).await {
-        Ok(clients) => return Ok(clients),
+        Ok(clients) => Ok(clients),
         Err(err) => {
             error!("Failed to get oauth clients, err: {}", err);
-            return Err(err.into());
+            Err(err.into())
         }
-    };
+    }
 }
 
 pub async fn create_oauth_client(
@@ -96,17 +96,17 @@ pub async fn delete_oauth_client(
     db_pool: &State<sqlx::Pool<DB>>,
     id: String,
 ) -> Result<(), OauthClientError> {
-    let id = Uuid::parse_str(&id).or_else(|err| {
+    let id = Uuid::parse_str(&id).map_err(|err| {
         error!("Failed to parse oauth client id as UUID, err {}", err);
-        Err(OauthClientError::InvalidId)
+        OauthClientError::InvalidId
     })?;
 
     let mut transaction = new_transaction(db_pool).await?;
     oauth_client_repository::delete_by_id(&mut transaction, id)
         .await
-        .or_else(|err| {
+        .map_err(|err| {
             error!("Failed to delete oauth client, err {}", err);
-            Err(OauthClientError::Internal)
+            OauthClientError::Internal
         })?
         .ok_or(OauthClientError::ClientIdNotFound)?;
 

@@ -103,17 +103,17 @@ pub async fn create_account(
         &nonces,
     )
     .await
-    .or_else(|err| {
+    .map_err(|err| {
         error!("Failed to create login details, err: {:?}", err);
-        Err(CreateAccountError::Internal)
+        CreateAccountError::Internal
     })?;
 
     let activation_code =
         activation_code_repository::insert(&mut transaction, unactivated_account.account_id)
             .await
-            .or_else(|err| {
+            .map_err(|err| {
                 error!("Failed to create activation_code, err: {:?}", err);
-                Err(CreateAccountError::Internal)
+                CreateAccountError::Internal
             })?;
 
     let email_content = format_email_content(config, &unactivated_account, &activation_code);
@@ -141,6 +141,8 @@ fn format_email_content(
     unactivated_account: &LoginDetails,
     activation_code: &ActivationCode,
 ) -> String {
+    let activate_account_uri = format!("{}{}", config.backend_address, ACTIVATE_ACCOUNT_ENDPOINT);
+
     format!(
         r#"Hi!
 
@@ -149,7 +151,7 @@ To activate the account, go to the following address: {activate_account_uri}?ema
 
 If the account is not activated within 12 hours it will be deleted.
         "#,
-        activate_account_uri = format!("{}{}", config.backend_address, ACTIVATE_ACCOUNT_ENDPOINT),
+        activate_account_uri = activate_account_uri,
         email = unactivated_account.email,
         code = activation_code.code
     )

@@ -38,7 +38,7 @@ impl From<sqlx::Error> for ResetPasswordError {
 }
 
 // 1 minute
-const RESET_PASSWORD_COOLDOWN_SECONDS: i64 = 60 * 1;
+const RESET_PASSWORD_COOLDOWN_SECONDS: i64 = 60;
 
 pub async fn initiate_password_reset(
     config: &State<Config>,
@@ -49,9 +49,9 @@ pub async fn initiate_password_reset(
 
     let existing_with_email = login_details_repository::get_by_email(&mut transaction, &email)
         .await
-        .or_else(|e| {
+        .map_err(|e| {
             error!("DB err: {:?}", e);
-            return Err(ResetPasswordError::Internal);
+            ResetPasswordError::Internal
         })?;
 
     let account = match existing_with_email {
@@ -68,12 +68,12 @@ pub async fn initiate_password_reset(
     let existing_password_reset =
         reset_password_repository::get_by_login_details(&mut transaction, account.account_id)
             .await
-            .or_else(|err| {
+            .map_err(|err| {
                 error!(
                     "Failed to retrieve existing password reset for account, err: {:?}",
                     err
                 );
-                Err(ResetPasswordError::Internal)
+                ResetPasswordError::Internal
             })?;
 
     if let Some(password_reset) = existing_password_reset {
@@ -87,18 +87,18 @@ pub async fn initiate_password_reset(
             // Delete the old password reset and create a new one
             reset_password_repository::delete_password_reset(&mut transaction, password_reset.id)
                 .await
-                .or_else(|err| {
+                .map_err(|err| {
                     error!("Failed to delete old password reset, err: {:?}", err);
-                    Err(ResetPasswordError::Internal)
+                    ResetPasswordError::Internal
                 })?;
         }
     }
 
     let reset_password = reset_password_repository::insert(&mut transaction, account.account_id)
         .await
-        .or_else(|err| {
+        .map_err(|err| {
             error!("Failed to create reset_password, err {:?}", err);
-            Err(ResetPasswordError::Internal)
+            ResetPasswordError::Internal
         })?;
 
     let email_content = format_reset_password_email_content(&reset_password);
@@ -145,9 +145,9 @@ pub async fn update_password(
 
     let account = login_details_repository::get_by_email(&mut transaction, &email)
         .await
-        .or_else(|e| {
+        .map_err(|e| {
             error!("DB err: {:?}", e);
-            Err(ResetPasswordError::Internal)
+            ResetPasswordError::Internal
         })?
         .ok_or(ResetPasswordError::InvalidEmailOrCode)?;
 
@@ -160,9 +160,9 @@ pub async fn update_password(
     .ok_or(ResetPasswordError::InvalidEmailOrCode)?;
 
     let (hashed_password, nonces) =
-        password_service::hash_and_encrypt_password(password.to_owned(), config).or_else(|e| {
+        password_service::hash_and_encrypt_password(password.to_owned(), config).map_err(|e| {
             error!("Failed to hash and encrypt password: {:?}", e);
-            return Err(ResetPasswordError::Internal);
+            ResetPasswordError::Internal
         })?;
 
     login_details_repository::update_account_password(
@@ -172,12 +172,12 @@ pub async fn update_password(
         &nonces,
     )
     .await
-    .or_else(|err| {
+    .map_err(|err| {
         error!(
             "Failed to update password for login details (account id: {}), err {:?}",
             account.account_id, err
         );
-        Err(ResetPasswordError::Internal)
+        ResetPasswordError::Internal
     })?;
 
     reset_password_repository::delete_password_reset(&mut transaction, password_reset_code.id)
@@ -185,9 +185,9 @@ pub async fn update_password(
 
     session_service::reset_account_sessions(redis_pool, uuid_from_sqlx(account.account_id))
         .await
-        .or_else(|err| {
+        .map_err(|err| {
             error!("Failed to reset account sessions, err: {}", err);
-            Err(ResetPasswordError::Internal)
+            ResetPasswordError::Internal
         })?;
 
     transaction.commit().await?;

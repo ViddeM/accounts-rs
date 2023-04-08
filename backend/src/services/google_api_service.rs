@@ -85,12 +85,12 @@ pub async fn retrieve_token(config: &Config) -> Result<String, GoogleApiError> {
         .text()
         .await?;
 
-    let response: GoogleAuthResponse = serde_json::from_str(&response_text).or_else(|_| {
+    let response: GoogleAuthResponse = serde_json::from_str(&response_text).map_err(|_| {
         println!(
             "GOOGLE API ERR: Failed to retrieve token, err: {}",
             response_text
         );
-        return Err(GoogleApiError::GoogleApiError);
+        GoogleApiError::GoogleApiError
     })?;
 
     Ok(response.access_token)
@@ -132,9 +132,9 @@ pub async fn send_email(
 ) -> Result<(), GoogleApiError> {
     let send_email_request = GoogleSendEmailRequest::new(
         &config.send_from_email_address,
-        &receiver_email,
-        &subject,
-        &content,
+        receiver_email,
+        subject,
+        content,
     );
 
     let client = reqwest::Client::new();
@@ -149,12 +149,12 @@ pub async fn send_email(
         .await?;
 
     let _response: GoogleSendEmailResponse =
-        serde_json::from_str(&response_text).or_else(|_| {
+        serde_json::from_str(&response_text).map_err(|_| {
             println!(
                 "GOOGLE API ERR: Failed to send email, err: {}",
                 response_text
             );
-            return Err(GoogleApiError::GoogleApiError);
+            GoogleApiError::GoogleApiError
         })?;
 
     Ok(())

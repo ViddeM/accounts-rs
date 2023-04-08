@@ -30,9 +30,9 @@ pub async fn get_all_users(db_pool: &State<Pool<DB>>) -> Result<Vec<Account>, Us
 
     let accs = account_repository::get_all_accounts(&mut transaction)
         .await
-        .or_else(|err| {
+        .map_err(|err| {
             error!("Failed to retrieve all users, err: {}", err);
-            Err(err)
+            err
         })?;
 
     Ok(accs)

@@ -28,15 +28,15 @@ Subject: {}
     } else {
         let token = google_api_service::retrieve_token(config)
             .await
-            .or_else(|err| {
+            .map_err(|err| {
                 error!("Failed to retrieve token from google, err: {}", err);
-                return Err(err);
+                err
             })?;
         google_api_service::send_email(receiver_email, subject, content, &token, config)
             .await
-            .or_else(|err| {
+            .map_err(|err| {
                 error!("Failed to send email, err: {}", err);
-                return Err(err);
+                err
             })?;
     }
     Ok(())
