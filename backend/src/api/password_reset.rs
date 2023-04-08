@@ -33,7 +33,7 @@ const ERR_INTERNAL: &str = "An internal error has occured, please contact the pa
 #[get("/forgot_password")]
 pub async fn get_forgot_password() -> Template {
     let data: BTreeMap<&str, String> = BTreeMap::new();
-    Template::render(FORGOT_PASSWORD_TEMPLATE_NAME, &data)
+    Template::render(FORGOT_PASSWORD_TEMPLATE_NAME, data)
 }
 
 #[derive(FromForm)]

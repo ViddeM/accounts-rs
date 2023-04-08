@@ -56,7 +56,7 @@ pub async fn get_authorization(
             ))
         }
         Err(err) => {
-            panic!("An oauth2 error occurred, err: {}", err);
+            panic!("An oauth2 error occurred, err: {err}");
         }
     };
 

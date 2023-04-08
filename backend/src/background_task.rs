@@ -36,14 +36,14 @@ const MINUTES_TO_ACTIVATE_ACCOUNT: u64 = 60 * 12;
 async fn delete_unactived_accounts(db_pool: &Pool<DB>) -> AccountsResult<()> {
     println!("Begin deletion of unactivated accounts");
 
-    let mut transaction = new_transaction(&db_pool).await?;
+    let mut transaction = new_transaction(db_pool).await?;
 
     let outdated_codes =
         activation_code_repository::delete_outdated(&mut transaction, MINUTES_TO_ACTIVATE_ACCOUNT)
             .await?;
     println!(
-        "Deleted outdated codes {:?} (codes older than {} minutes)",
-        outdated_codes, MINUTES_TO_ACTIVATE_ACCOUNT
+        "Deleted outdated codes {:?} (codes older than {MINUTES_TO_ACTIVATE_ACCOUNT} minutes)",
+        outdated_codes
     );
 
     let unactivated_account_ids: Vec<Uuid> = outdated_codes
@@ -72,7 +72,7 @@ const MINUTES_TO_RESET_PASSWORD: u64 = 60 * 3;
 async fn delete_unused_password_resets(db_pool: &Pool<DB>) -> AccountsResult<()> {
     println!("Begin deletion of unused password resets");
 
-    let mut transaction = new_transaction(&db_pool).await?;
+    let mut transaction = new_transaction(db_pool).await?;
 
     let outdated_password_resets =
         reset_password_repository::delete_outdated(&mut transaction, MINUTES_TO_RESET_PASSWORD)

@@ -47,12 +47,12 @@ pub struct LoginForm {
 
 #[get("/login")]
 pub async fn get_login_page(session: Option<Session>) -> Either<Template, Redirect> {
-    if let Some(_) = session {
+    if session.is_some() {
         return Either::Right(Redirect::to(LOGIN_SUCCESSFUL_ADDRESS));
     }
 
     let data: BTreeMap<&str, String> = get_default_login_data();
-    Either::Left(Template::render(LOGIN_TEMPLATE_NAME, &data))
+    Either::Left(Template::render(LOGIN_TEMPLATE_NAME, data))
 }
 
 #[post("/login", data = "<user_input>")]

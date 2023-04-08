@@ -89,5 +89,5 @@ pub async fn create_account(
     };
 
     data.insert(INFO_KEY, INFO_EMAIL_HAS_BEEN_SENT.to_string());
-    return Template::render(CREATE_ACCOUNT_TEMPLATE_NAME, &data);
+    Template::render(CREATE_ACCOUNT_TEMPLATE_NAME, &data)
 }

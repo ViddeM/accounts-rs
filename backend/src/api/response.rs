@@ -40,7 +40,7 @@ impl<T: Serialize + Clone> ResponseStatus<T> {
         map: HashMap<&'static str, &'static str>,
     ) -> ResponseStatus<T> {
         ResponseStatus {
-            status: status,
+            status,
             response_data: ResponseData::Success(data),
             headers: map,
         }
@@ -73,7 +73,7 @@ impl<T: Serialize + Clone> Display for ResponseData<T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             ResponseData::Success(_) => write!(f, "Success"),
-            ResponseData::Failure(err_msg) => write!(f, "Error: {}", err_msg),
+            ResponseData::Failure(err_msg) => write!(f, "Error: {err_msg}"),
         }
     }
 }
