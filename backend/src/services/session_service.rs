@@ -108,7 +108,7 @@ impl<'r> FromRequest<'r> for Session {
             match redis_service::redis_get_option::<RedisSession>(redis_pool, key).await {
                 Ok(Some(s)) => s.into(),
                 Ok(None) => {
-                    error!("Session was not found in the cache, this should generally not happen");
+                    // Most likely, the session has expired
                     // Delete the invalid cookie and require re-login
                     delete_session_cookie(request.cookies()).await;
                     return rocket::request::Outcome::Failure((
