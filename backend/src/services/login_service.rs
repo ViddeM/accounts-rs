@@ -120,6 +120,6 @@ fn get_account_lockout(invalid_password_count: i32) -> Option<DateTime<Utc>> {
     let now = Utc::now();
     let locked_until = now
         .checked_add_signed(lockout_duration)
-        .unwrap_or(chrono::MAX_DATETIME);
+        .unwrap_or(DateTime::<Utc>::MAX_UTC);
     Some(locked_until)
 }
