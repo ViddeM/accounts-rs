@@ -22,7 +22,7 @@ pub async fn get_authorization(
     client_id: String,
     redirect_uri: String,
     state: String,
-    _session: Session,
+    session: Session,
 ) -> Result<Redirect, ResponseStatus<()>> {
     if response_type != RESPONSE_TYPE_CODE {
         return Err(ResponseStatus::err(
@@ -37,6 +37,7 @@ pub async fn get_authorization(
         client_id.clone(),
         redirect_uri,
         state,
+        session.account_id,
     )
     .await
     {

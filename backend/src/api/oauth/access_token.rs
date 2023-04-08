@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use chrono::Utc;
 use mobc_redis::RedisConnectionManager;
 use rocket::{http::Status, State};
 use serde::Serialize;
@@ -42,7 +43,7 @@ pub async fn get_access_token(
         return ResponseStatus::err(Status::UnprocessableEntity, ErrMsg::InvalidGrantType);
     }
 
-    match oauth2_authorization_service::get_access_token(
+    let access_token = match oauth2_authorization_service::get_access_token(
         db_pool,
         redis_pool,
         client_id,
@@ -52,7 +53,7 @@ pub async fn get_access_token(
     )
     .await
     {
-        Ok(()) => {}
+        Ok(access_token) => access_token,
         Err(Oauth2Error::NoClientWithId) => {
             return ResponseStatus::err(Status::BadRequest, ErrMsg::InvalidClientId)
         }
@@ -69,12 +70,19 @@ pub async fn get_access_token(
             error!("Failed to get access token, err: {}", err);
             return ResponseStatus::internal_err();
         }
+    };
+
+    let now = Utc::now();
+    let expires_in = access_token.expiration.timestamp() - now.timestamp(); // The number of seconds until expiration
+    if expires_in <= 0 {
+        warn!("Expires in is {expires_in} before being returned to the caller!");
     }
+    let expires_in = expires_in as u32; // Just checked that it's not negative so this is safe.
 
     ResponseStatus::ok_with(
         AccessTokenResponse {
-            access_token: String::new(), // TODO: Implement
-            expires_in: 123,
+            access_token: access_token.access_token, // TODO: Implement
+            expires_in,
             token_type: TOKEN_TYPE_BEARER.to_string(),
         },
         Status::Ok,
