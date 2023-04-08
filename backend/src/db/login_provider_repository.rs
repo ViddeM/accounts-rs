@@ -3,6 +3,8 @@ use crate::models::login_provider::{LoginProvider, LOCAL_LOGIN_PROVIDER};
 use crate::util::accounts_error::AccountsResult;
 use sqlx::Transaction;
 
+// TODO: We'll probably need this when we have multiple login providers
+#[allow(dead_code)]
 pub async fn get_local_login_provider(
     transaction: &mut Transaction<'_, DB>,
 ) -> AccountsResult<LoginProvider> {
