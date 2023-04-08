@@ -1,45 +1,159 @@
 {
   "db": "PostgreSQL",
-  "5bda4bb169993defe96cd625dbbe2dde4287833cd664579dcb16885e01b056bf": {
-    "query": "\nSELECT *\nFROM login_details\nWHERE email = $1\n    ",
+  "077072746fac2e4740b2ed00221487cd4787225e7529bec0641f1283811fa01a": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "UuidArray"
+        ]
+      }
+    },
+    "query": "\nDELETE \nFROM account\nWHERE id = ANY($1)\n    "
+  },
+  "0a88e646adf6559770bc2e11de0f631fcecf97df33e2e24f301258fd9d2de1db": {
     "describe": {
       "columns": [
         {
+          "name": "id",
           "ordinal": 0,
-          "name": "account_id",
           "type_info": "Uuid"
         },
         {
+          "name": "client_id",
           "ordinal": 1,
-          "name": "email",
           "type_info": "Text"
         },
         {
+          "name": "client_secret",
           "ordinal": 2,
-          "name": "password",
           "type_info": "Text"
         },
         {
+          "name": "client_name",
           "ordinal": 3,
-          "name": "password_nonces",
           "type_info": "Text"
         },
         {
+          "name": "redirect_uri",
           "ordinal": 4,
+          "type_info": "Text"
+        },
+        {
           "name": "created_at",
+          "ordinal": 5,
           "type_info": "Timestamptz"
         },
         {
-          "ordinal": 5,
           "name": "modified_at",
+          "ordinal": 6,
           "type_info": "Timestamptz"
         }
       ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": []
+      }
+    },
+    "query": "\nSELECT *\nFROM oauth_client\n        "
+  },
+  "0dc4a6d27fe053b52b30acb7685e250f7f0f1ee985d2b2b300e51614564bc174": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "login_details",
+          "ordinal": 1,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "code",
+          "ordinal": 2,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 3,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "modified_at",
+          "ordinal": 4,
+          "type_info": "Timestamptz"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
       "parameters": {
         "Left": [
-          "Text"
+          "Float8"
         ]
-      },
+      }
+    },
+    "query": "\nDELETE\nFROM activation_code\nWHERE created_at + ($1 * interval '1 minute') < NOW()\nRETURNING id, login_details, code, created_at, modified_at\n        "
+  },
+  "0ec598d18374e230bd41fc9af69e311604fde25dfb6dcdcc051a6bf4f9810e1a": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "first_name",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "last_name",
+          "ordinal": 2,
+          "type_info": "Text"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 3,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "modified_at",
+          "ordinal": 4,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "authority: _",
+          "ordinal": 5,
+          "type_info": {
+            "Custom": {
+              "kind": {
+                "Enum": [
+                  "user",
+                  "admin"
+                ]
+              },
+              "name": "authority_level"
+            }
+          }
+        }
+      ],
       "nullable": [
         false,
         false,
@@ -47,88 +161,817 @@
         false,
         false,
         false
-      ]
-    }
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid",
+          {
+            "Custom": {
+              "kind": {
+                "Enum": [
+                  "user",
+                  "admin"
+                ]
+              },
+              "name": "authority_level"
+            }
+          }
+        ]
+      }
+    },
+    "query": "\nSELECT id, first_name, last_name, created_at, modified_at, authority AS \"authority: _\"\nFROM account\nWHERE id = $1 AND authority = $2\n        "
   },
-  "c636c806f4ed2a3f8d6d37539c35236448e5c4dc1b827766ef4270a2a3a6b22c": {
-    "query": "\nINSERT INTO account (first_name, last_name)\nVALUES              ($1,         $2       )\nRETURNING id, first_name, last_name, created_at, modified_at\n        ",
+  "1766cd0fc8be06b25faafc5a7c14623341749ca6ef3dd46c2d2ea03639ddeee5": {
     "describe": {
       "columns": [
         {
+          "name": "account_id",
           "ordinal": 0,
-          "name": "id",
           "type_info": "Uuid"
         },
         {
+          "name": "email",
           "ordinal": 1,
-          "name": "first_name",
           "type_info": "Text"
         },
         {
+          "name": "password",
           "ordinal": 2,
-          "name": "last_name",
           "type_info": "Text"
         },
         {
+          "name": "password_nonces",
           "ordinal": 3,
+          "type_info": "Text"
+        },
+        {
           "name": "created_at",
+          "ordinal": 4,
           "type_info": "Timestamptz"
         },
         {
-          "ordinal": 4,
           "name": "modified_at",
+          "ordinal": 5,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "activated_at",
+          "ordinal": 6,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "incorrect_password_count",
+          "ordinal": 7,
+          "type_info": "Int4"
+        },
+        {
+          "name": "account_locked_until",
+          "ordinal": 8,
           "type_info": "Timestamptz"
         }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        false,
+        true
       ],
       "parameters": {
         "Left": [
           "Text",
+          "Text",
+          "Uuid"
+        ]
+      }
+    },
+    "query": "\nUPDATE login_details\nSET password        = $1,\n    password_nonces = $2,\n    modified_at     = NOW()\nWHERE account_id=$3\nRETURNING account_id, email, password, password_nonces, created_at, modified_at, activated_at, incorrect_password_count, account_locked_until\n    "
+  },
+  "350b17f2310ebabf68b3ede113bc80c773df30db82678833f51a6ee0a1743dd5": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "client_id",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "client_secret",
+          "ordinal": 2,
+          "type_info": "Text"
+        },
+        {
+          "name": "client_name",
+          "ordinal": 3,
+          "type_info": "Text"
+        },
+        {
+          "name": "redirect_uri",
+          "ordinal": 4,
+          "type_info": "Text"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 5,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "modified_at",
+          "ordinal": 6,
+          "type_info": "Timestamptz"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
           "Text"
         ]
-      },
+      }
+    },
+    "query": "\nSELECT *\nFROM oauth_client\nWHERE client_id=$1\n    "
+  },
+  "4611db9fa8de586dbccc1c61bf73457e5009c9e37a196748682eceebf795ea26": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "login_details",
+          "ordinal": 1,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "code",
+          "ordinal": 2,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 3,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "modified_at",
+          "ordinal": 4,
+          "type_info": "Timestamptz"
+        }
+      ],
       "nullable": [
         false,
         false,
         false,
         false,
         false
-      ]
-    }
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      }
+    },
+    "query": "\nINSERT INTO password_reset (login_details)\nVALUES                     ($1           )\nRETURNING id, login_details, code, created_at, modified_at\n    "
   },
-  "e1b491120068847289be8662734bfb2ff2237e6de6cd172af283819429d4249d": {
-    "query": "\nINSERT INTO login_details (account_id, email, password, password_nonces)\nVALUES                    ($1,         $2,    $3,       $4)\nRETURNING account_id, email, password, password_nonces, created_at, modified_at\n        ",
+  "485f1596b76f210d2abaa088df44a278e45e52f2b7bfeafd7e12cc048966cd96": {
     "describe": {
       "columns": [
         {
+          "name": "email",
           "ordinal": 0,
+          "type_info": "Text"
+        },
+        {
+          "name": "login_provider",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 2,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "modified_at",
+          "ordinal": 3,
+          "type_info": "Timestamptz"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "\nINSERT INTO whitelist (email, login_provider)\nVALUES                ($1,    'local')\nRETURNING *\n        "
+  },
+  "592a903c728d7ebdd8cd57c7101dc42bc837aa2b7b186aa97d72463fe2c11a80": {
+    "describe": {
+      "columns": [
+        {
+          "name": "email",
+          "ordinal": 0,
+          "type_info": "Text"
+        },
+        {
+          "name": "login_provider",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 2,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "modified_at",
+          "ordinal": 3,
+          "type_info": "Timestamptz"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": []
+      }
+    },
+    "query": "\nSELECT *\nFROM whitelist\n    "
+  },
+  "5bda4bb169993defe96cd625dbbe2dde4287833cd664579dcb16885e01b056bf": {
+    "describe": {
+      "columns": [
+        {
           "name": "account_id",
+          "ordinal": 0,
           "type_info": "Uuid"
         },
         {
-          "ordinal": 1,
           "name": "email",
+          "ordinal": 1,
           "type_info": "Text"
         },
         {
-          "ordinal": 2,
           "name": "password",
+          "ordinal": 2,
           "type_info": "Text"
         },
         {
-          "ordinal": 3,
           "name": "password_nonces",
+          "ordinal": 3,
           "type_info": "Text"
         },
         {
-          "ordinal": 4,
           "name": "created_at",
+          "ordinal": 4,
           "type_info": "Timestamptz"
         },
         {
-          "ordinal": 5,
           "name": "modified_at",
+          "ordinal": 5,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "activated_at",
+          "ordinal": 6,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "incorrect_password_count",
+          "ordinal": 7,
+          "type_info": "Int4"
+        },
+        {
+          "name": "account_locked_until",
+          "ordinal": 8,
           "type_info": "Timestamptz"
         }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        false,
+        true
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "\nSELECT *\nFROM login_details\nWHERE email = $1\n    "
+  },
+  "5c922a953a308e19dd6eba7413611751b9933b820b1f157380ef55ba7fea6f8d": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "first_name",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "last_name",
+          "ordinal": 2,
+          "type_info": "Text"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 3,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "modified_at",
+          "ordinal": 4,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "authority: _",
+          "ordinal": 5,
+          "type_info": {
+            "Custom": {
+              "kind": {
+                "Enum": [
+                  "user",
+                  "admin"
+                ]
+              },
+              "name": "authority_level"
+            }
+          }
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": []
+      }
+    },
+    "query": "\nSELECT id, first_name, last_name, created_at, modified_at, authority AS \"authority: _\"\nFROM account\n    "
+  },
+  "60a91284f1609de0e0d04cd7e6ab2d8177ab17b052f1381663c8186a5965b8cb": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "\nDELETE FROM whitelist\nWHERE email = $1\n    "
+  },
+  "6ab44abcde941d1a69d973a96c1c7239a5030d22a8629908fd7668220b6dc0ff": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Int4",
+          "Timestamptz",
+          "Uuid"
+        ]
+      }
+    },
+    "query": "\nUPDATE login_details\nSET\n    incorrect_password_count=$1,\n    account_locked_until=$2,\n    modified_at=NOW()\nWHERE account_id=$3\n"
+  },
+  "77ca7abecfac14448adcc5540fc794369d15ff5a8083fb775b8cf009dfd473ed": {
+    "describe": {
+      "columns": [
+        {
+          "name": "name",
+          "ordinal": 0,
+          "type_info": "Text"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 1,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "modified_at",
+          "ordinal": 2,
+          "type_info": "Timestamptz"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "\nSELECT *\nFROM login_provider\nWHERE name = $1\n        "
+  },
+  "8644437c3b70599047acb57952187d70a4c76a5e3e582cffdad81e79e0a15dd2": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      }
+    },
+    "query": "\nDELETE\nFROM activation_code\nWHERE login_details = $1\n    "
+  },
+  "86653b310b45106322bfb9afa1c382cd36f7e8385fb23dbf3b3372b3016b0be5": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "login_details",
+          "ordinal": 1,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "code",
+          "ordinal": 2,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 3,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "modified_at",
+          "ordinal": 4,
+          "type_info": "Timestamptz"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid",
+          "Uuid"
+        ]
+      }
+    },
+    "query": "\nSELECT id, login_details, code, created_at, modified_at\nFROM activation_code\nWHERE\n    login_details = $1 AND\n    code = $2\n        "
+  },
+  "9033734ee5453c40bf168699e15e5386ba434393d9b7c73e65c73405784a0931": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "login_details",
+          "ordinal": 1,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "code",
+          "ordinal": 2,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 3,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "modified_at",
+          "ordinal": 4,
+          "type_info": "Timestamptz"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Float8"
+        ]
+      }
+    },
+    "query": "\nDELETE\nFROM password_reset\nWHERE created_at + ($1 * interval '1 minute') < NOW()\nRETURNING id, login_details, code, created_at, modified_at\n        "
+  },
+  "9402513e88a48fc54d32a7eabef57a17adf40817dc20fecefe3893611b7f15e1": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "client_id",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "client_secret",
+          "ordinal": 2,
+          "type_info": "Text"
+        },
+        {
+          "name": "client_name",
+          "ordinal": 3,
+          "type_info": "Text"
+        },
+        {
+          "name": "redirect_uri",
+          "ordinal": 4,
+          "type_info": "Text"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 5,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "modified_at",
+          "ordinal": 6,
+          "type_info": "Timestamptz"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      }
+    },
+    "query": "\nDELETE\nFROM oauth_client\nWHERE id=$1\nRETURNING *\n        "
+  },
+  "96ec1022c0f8ada1886fe02b8db7d1f827cb97838456ff32283f1bb661603b30": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "client_id",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "client_secret",
+          "ordinal": 2,
+          "type_info": "Text"
+        },
+        {
+          "name": "client_name",
+          "ordinal": 3,
+          "type_info": "Text"
+        },
+        {
+          "name": "redirect_uri",
+          "ordinal": 4,
+          "type_info": "Text"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 5,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "modified_at",
+          "ordinal": 6,
+          "type_info": "Timestamptz"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Text",
+          "Text",
+          "Text"
+        ]
+      }
+    },
+    "query": "\nINSERT INTO oauth_client (client_id, client_secret, client_name, redirect_uri)\nVALUES                   ($1,        $2,            $3,          $4)\nRETURNING *\n        "
+  },
+  "9b88fedbbf5e85eeb98c987434609e712de0eae9120d37527c5fd6eebfa27be4": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "login_details",
+          "ordinal": 1,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "code",
+          "ordinal": 2,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 3,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "modified_at",
+          "ordinal": 4,
+          "type_info": "Timestamptz"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      }
+    },
+    "query": "\nSELECT id, login_details, code, created_at, modified_at\nFROM password_reset\nWHERE login_details = $1\n        "
+  },
+  "aaef9dc931c5beadc388ec3245a93e6addca19760cf161984d72aba84ed5833b": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "login_details",
+          "ordinal": 1,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "code",
+          "ordinal": 2,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 3,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "modified_at",
+          "ordinal": 4,
+          "type_info": "Timestamptz"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      }
+    },
+    "query": "\nINSERT INTO activation_code (login_details)\nVALUES                      ($1           )\nRETURNING id, login_details, code, created_at, modified_at\n        "
+  },
+  "b17296b8b80ec27c20333bf06fec3a786f603e9368ac30fb25816b075b27baa0": {
+    "describe": {
+      "columns": [
+        {
+          "name": "account_id",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "email",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "password",
+          "ordinal": 2,
+          "type_info": "Text"
+        },
+        {
+          "name": "password_nonces",
+          "ordinal": 3,
+          "type_info": "Text"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 4,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "modified_at",
+          "ordinal": 5,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "activated_at",
+          "ordinal": 6,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "incorrect_password_count",
+          "ordinal": 7,
+          "type_info": "Int4"
+        },
+        {
+          "name": "account_locked_until",
+          "ordinal": 8,
+          "type_info": "Timestamptz"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        false,
+        true
       ],
       "parameters": {
         "Left": [
@@ -137,7 +980,98 @@
           "Text",
           "Text"
         ]
-      },
+      }
+    },
+    "query": "\nINSERT INTO login_details (account_id, email, password, password_nonces, activated_at, incorrect_password_count, account_locked_until)\nVALUES                    ($1,         $2,    $3,       $4,              NULL,         0,                        NULL)\nRETURNING account_id, email, password, password_nonces, created_at, modified_at, activated_at, incorrect_password_count, account_locked_until\n        "
+  },
+  "b937c299da7cb4a9a1a47627e1a33a46af30ebc34a000d8c3d6193eb78fd1eca": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "login_details",
+          "ordinal": 1,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "code",
+          "ordinal": 2,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 3,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "modified_at",
+          "ordinal": 4,
+          "type_info": "Timestamptz"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      }
+    },
+    "query": "\nDELETE\nFROM password_reset\nWHERE id=$1\nRETURNING id, login_details, code, created_at, modified_at\n    "
+  },
+  "bde44ba901f8306faf3a87bb49a731767ce01d08678dfb3a7f864e8da6ed9205": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "first_name",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "last_name",
+          "ordinal": 2,
+          "type_info": "Text"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 3,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "modified_at",
+          "ordinal": 4,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "authority: _",
+          "ordinal": 5,
+          "type_info": {
+            "Custom": {
+              "kind": {
+                "Enum": [
+                  "user",
+                  "admin"
+                ]
+              },
+              "name": "authority_level"
+            }
+          }
+        }
+      ],
       "nullable": [
         false,
         false,
@@ -145,50 +1079,241 @@
         false,
         false,
         false
-      ]
-    }
-  },
-  "f53749a980c006b727227d83fe16ee061b9b23a59400dd3090b404ade70a0704": {
-    "query": "\nSELECT *\nFROM login_details\nWHERE email = $1\nAND password = $2\n    ",
-    "describe": {
-      "columns": [
-        {
-          "ordinal": 0,
-          "name": "account_id",
-          "type_info": "Uuid"
-        },
-        {
-          "ordinal": 1,
-          "name": "email",
-          "type_info": "Text"
-        },
-        {
-          "ordinal": 2,
-          "name": "password",
-          "type_info": "Text"
-        },
-        {
-          "ordinal": 3,
-          "name": "password_nonces",
-          "type_info": "Text"
-        },
-        {
-          "ordinal": 4,
-          "name": "created_at",
-          "type_info": "Timestamptz"
-        },
-        {
-          "ordinal": 5,
-          "name": "modified_at",
-          "type_info": "Timestamptz"
-        }
       ],
       "parameters": {
         "Left": [
           "Text",
           "Text"
         ]
-      },
+      }
+    },
+    "query": "\nINSERT INTO account (first_name, last_name)\nVALUES              ($1,         $2       )\nRETURNING id, first_name, last_name, created_at, modified_at, authority as \"authority: _\" \n        "
+  },
+  "c7e5e279fa6c00a5b64d881f50a541deae4843555a714e5a70f8697d39e43bd5": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "login_details",
+          "ordinal": 1,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "code",
+          "ordinal": 2,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 3,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "modified_at",
+          "ordinal": 4,
+          "type_info": "Timestamptz"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid",
+          "Uuid"
+        ]
+      }
+    },
+    "query": "\nSELECT id, login_details, code, created_at, modified_at\nFROM password_reset\nWHERE\n    login_details = $1 AND\n    code = $2\n    "
+  },
+  "d38f1393a0ec7fa7fab536db57aa4fc965bce88335a4935e6fe2312c7b97076a": {
+    "describe": {
+      "columns": [
+        {
+          "name": "account_id",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "email",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "password",
+          "ordinal": 2,
+          "type_info": "Text"
+        },
+        {
+          "name": "password_nonces",
+          "ordinal": 3,
+          "type_info": "Text"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 4,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "modified_at",
+          "ordinal": 5,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "activated_at",
+          "ordinal": 6,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "incorrect_password_count",
+          "ordinal": 7,
+          "type_info": "Int4"
+        },
+        {
+          "name": "account_locked_until",
+          "ordinal": 8,
+          "type_info": "Timestamptz"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        false,
+        true
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      }
+    },
+    "query": "\nSELECT *\nFROM login_details\nWHERE account_id = $1\n    "
+  },
+  "d777a024a54d22b5c4727960645e94b58b5b47dc13bf131a2306b478d43112ba": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "\nINSERT INTO login_provider(name)\nVALUES                    ($1)\n    "
+  },
+  "d9bbd115eddcc6f8d71be1eb4804159c251bddb5e048cd56b1eaadb9ddfaa156": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "client_id",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "client_secret",
+          "ordinal": 2,
+          "type_info": "Text"
+        },
+        {
+          "name": "client_name",
+          "ordinal": 3,
+          "type_info": "Text"
+        },
+        {
+          "name": "redirect_uri",
+          "ordinal": 4,
+          "type_info": "Text"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 5,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "modified_at",
+          "ordinal": 6,
+          "type_info": "Timestamptz"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "\nSELECT *\nFROM oauth_client\nWHERE client_name=$1\n        "
+  },
+  "e87c4f70ea8c4e829716d2cdc4242f1e743617bafc77a3a4cd960f91d866b934": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "first_name",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "last_name",
+          "ordinal": 2,
+          "type_info": "Text"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 3,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "modified_at",
+          "ordinal": 4,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "authority: _",
+          "ordinal": 5,
+          "type_info": {
+            "Custom": {
+              "kind": {
+                "Enum": [
+                  "user",
+                  "admin"
+                ]
+              },
+              "name": "authority_level"
+            }
+          }
+        }
+      ],
       "nullable": [
         false,
         false,
@@ -196,7 +1321,76 @@
         false,
         false,
         false
-      ]
-    }
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      }
+    },
+    "query": "\nSELECT id, first_name, last_name, created_at, modified_at, authority AS \"authority: _\"\nFROM account\nWHERE id = $1\n        "
+  },
+  "f7edfc4f427cd23c18741911bbc725f161c94ad0101989a052a99c55677ede13": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      }
+    },
+    "query": "\nUPDATE login_details\nSET \n    activated_at = NOW(),\n    modified_at = NOW()\nWHERE account_id = $1\n        "
+  },
+  "fc1ffe916bcfa770e6c50b2be14f632ff635c19ce1e68106f5d3cc6d91b325f2": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "UuidArray"
+        ]
+      }
+    },
+    "query": "\nDELETE \nFROM login_details\nWHERE account_id = ANY($1)\n        "
+  },
+  "fe22fe79e83a46eab8e63d59c03d6d25bef41b059bfaaaf1985131c6a33cc61a": {
+    "describe": {
+      "columns": [
+        {
+          "name": "email",
+          "ordinal": 0,
+          "type_info": "Text"
+        },
+        {
+          "name": "login_provider",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 2,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "modified_at",
+          "ordinal": 3,
+          "type_info": "Timestamptz"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Text"
+        ]
+      }
+    },
+    "query": "\nSELECT *\nFROM whitelist\nWHERE email = $1 AND login_provider = $2\n        "
   }
 }
