@@ -8,7 +8,7 @@ use crate::{
     db::{login_details_repository, new_transaction, reset_password_repository, DB},
     models::password_reset::PasswordReset,
     services::{email_service, email_service::EmailError, password_service},
-    util::{accounts_error::AccountsError, config::Config},
+    util::{accounts_error::AccountsError, config::Config, uuid::uuid_from_sqlx},
 };
 
 use super::session_service;
@@ -183,7 +183,7 @@ pub async fn update_password(
     reset_password_repository::delete_password_reset(&mut transaction, password_reset_code.id)
         .await?;
 
-    session_service::reset_account_sessions(redis_pool, account.account_id)
+    session_service::reset_account_sessions(redis_pool, uuid_from_sqlx(account.account_id))
         .await
         .or_else(|err| {
             error!("Failed to reset account sessions, err: {}", err);

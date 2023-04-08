@@ -8,9 +8,10 @@ use rocket::http::{Cookie, CookieJar, Status};
 use rocket::request::{FromRequest, Request};
 use rocket::State;
 use serde::{Deserialize, Serialize};
-use sqlx::types::Uuid;
+use uuid::Uuid;
 
 use crate::models::login_details::LoginDetails;
+use crate::util::uuid::uuid_from_sqlx;
 
 use super::redis_service;
 
@@ -40,7 +41,7 @@ impl From<RedisSession> for Session {
         Self {
             id: s.id,
             expiration: s.expiration,
-            account_id: Uuid::from_u128(s.account_id.as_u128()),
+            account_id: s.account_id,
         }
     }
 }
@@ -50,7 +51,7 @@ impl From<Session> for RedisSession {
         Self {
             id: s.id,
             expiration: s.expiration,
-            account_id: uuid::Uuid::from_u128(s.account_id.as_u128()),
+            account_id: s.account_id,
         }
     }
 }
@@ -171,7 +172,7 @@ pub async fn set_session(
     let session: RedisSession = Session {
         id: session_id.clone(),
         expiration: expiration_time,
-        account_id: login_details.account_id,
+        account_id: uuid_from_sqlx(login_details.account_id),
     }
     .into();
 

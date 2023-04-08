@@ -1,10 +1,11 @@
 use rocket::State;
-use sqlx::{types::Uuid, Pool};
+use sqlx::Pool;
+use uuid::Uuid;
 
 use crate::{
     db::{account_repository, login_details_repository, new_transaction, DB},
     models::{account::Account, login_details::LoginDetails},
-    util::accounts_error::AccountsError,
+    util::{accounts_error::AccountsError, uuid::uuid_to_sqlx},
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -22,6 +23,8 @@ pub async fn get_me(
     db_pool: &State<Pool<DB>>,
 ) -> Result<(Account, Option<LoginDetails>), UserError> {
     let mut transaction = new_transaction(db_pool).await?;
+
+    let account_id = uuid_to_sqlx(account_id);
 
     let acc = account_repository::get_account(&mut transaction, account_id)
         .await?

@@ -4,6 +4,7 @@ use crate::{
     db::{account_repository, new_transaction, DB},
     models::account::Account,
     services::session_service::Session,
+    util::uuid::uuid_to_sqlx,
 };
 
 #[derive(Debug)]
@@ -72,28 +73,31 @@ impl<'r> FromRequest<'r> for AdminSession {
             }
         };
 
-        let admin_account =
-            match account_repository::get_admin_account(&mut transaction, session.account_id).await
-            {
-                Ok(Some(acc)) => acc,
-                Ok(None) => {
-                    error!(
-                        "Account {} does not have admin clearance",
-                        session.account_id
-                    );
-                    return rocket::request::Outcome::Failure((
-                        Status::Forbidden,
-                        AdminSessionError::UserNotAdmin,
-                    ));
-                }
-                Err(err) => {
-                    error!("Failed to get account from DB, err: {}", err);
-                    return rocket::request::Outcome::Failure((
-                        Status::InternalServerError,
-                        AdminSessionError::DBError,
-                    ));
-                }
-            };
+        let admin_account = match account_repository::get_admin_account(
+            &mut transaction,
+            uuid_to_sqlx(session.account_id),
+        )
+        .await
+        {
+            Ok(Some(acc)) => acc,
+            Ok(None) => {
+                error!(
+                    "Account {} does not have admin clearance",
+                    session.account_id
+                );
+                return rocket::request::Outcome::Failure((
+                    Status::Forbidden,
+                    AdminSessionError::UserNotAdmin,
+                ));
+            }
+            Err(err) => {
+                error!("Failed to get account from DB, err: {}", err);
+                return rocket::request::Outcome::Failure((
+                    Status::InternalServerError,
+                    AdminSessionError::DBError,
+                ));
+            }
+        };
 
         rocket::request::Outcome::Success(AdminSession {
             session,
