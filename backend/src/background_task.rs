@@ -42,7 +42,7 @@ async fn delete_unactived_accounts(db_pool: &Pool<DB>) -> AccountsResult<()> {
         activation_code_repository::delete_outdated(&mut transaction, MINUTES_TO_ACTIVATE_ACCOUNT)
             .await?;
     println!(
-        "Deleted outdated codes {:?} using {}",
+        "Deleted outdated codes {:?} (codes older than {} minutes)",
         outdated_codes, MINUTES_TO_ACTIVATE_ACCOUNT
     );
 
