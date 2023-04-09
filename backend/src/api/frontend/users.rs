@@ -2,10 +2,10 @@ use rocket::State;
 use serde::Serialize;
 
 use crate::{
-    api::response::ResponseStatus,
+    api::{auth::admin_session_guard::AdminSession, response::ResponseStatus},
     db::DB,
     models::authority::AuthorityLevel,
-    services::{admin_session_service::AdminSession, users_service},
+    services::users_service,
 };
 
 #[derive(Serialize, Clone)]

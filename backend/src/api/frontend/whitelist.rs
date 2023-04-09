@@ -2,9 +2,12 @@ use rocket::{serde::json::Json, State};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    api::response::{NoContent, ResponseStatus},
+    api::{
+        auth::admin_session_guard::AdminSession,
+        response::{EmptyResponse, ResponseStatus},
+    },
     db::DB,
-    services::{admin_session_service::AdminSession, whitelist_service},
+    services::whitelist_service,
 };
 
 #[derive(Serialize, Clone)]
@@ -68,9 +71,9 @@ pub async fn delete_email_from_whitelist(
     db_pool: &State<sqlx::Pool<DB>>,
     _admin_session: AdminSession,
     email: String,
-) -> ResponseStatus<NoContent> {
+) -> ResponseStatus<EmptyResponse> {
     match whitelist_service::delete_from_whitelist(db_pool, email).await {
-        Ok(_) => ResponseStatus::<NoContent>::ok_no_content(),
+        Ok(_) => ResponseStatus::<EmptyResponse>::ok_no_content(),
         Err(err) => {
             error!("Failed to delete email from whitelist, err {}", err);
             ResponseStatus::internal_err()

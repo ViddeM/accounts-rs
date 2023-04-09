@@ -2,15 +2,13 @@ use rocket::{http::Status, serde::json::Json, State};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    api::response::{NoContent, ResponseStatus},
-    db::DB,
-    services::{
-        admin_session_service::AdminSession,
-        oauth_client_service::{self, OauthClientError},
+    api::{
+        auth::admin_session_guard::AdminSession,
+        response::{EmptyResponse, ErrMsg, ResponseStatus},
     },
+    db::DB,
+    services::oauth_client_service::{self, OauthClientError},
 };
-
-use super::response::ErrMsg;
 
 #[derive(Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -98,9 +96,9 @@ pub async fn delete_client(
     db_pool: &State<sqlx::Pool<DB>>,
     id: String,
     _admin_session: AdminSession,
-) -> ResponseStatus<NoContent> {
+) -> ResponseStatus<EmptyResponse> {
     match oauth_client_service::delete_oauth_client(db_pool, id).await {
-        Ok(()) => ResponseStatus::<NoContent>::ok_no_content(),
+        Ok(()) => ResponseStatus::<EmptyResponse>::ok_no_content(),
         Err(OauthClientError::InvalidId) => {
             ResponseStatus::err(Status::BadRequest, ErrMsg::InvalidUuid)
         }

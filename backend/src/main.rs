@@ -1,8 +1,11 @@
 #![forbid(unsafe_code)]
-// #![feature(try_trait_v2)]
 #[macro_use]
 extern crate rocket;
 
+use api::core::core_routes;
+use api::external::external_routes;
+use api::frontend::site_routes;
+use api::oauth::oauth_routes;
 use api::response::{ErrMsg, ResponseStatus};
 use rocket::http::Status;
 use rocket::response::Responder;
@@ -58,33 +61,10 @@ async fn rocket() -> _ {
     task::spawn(background_task::run_background_tasks(pool_clone));
 
     rocket::build()
-        .mount(
-            "/api",
-            routes![
-                api::index::index,
-                api::login::get_login_page,
-                api::login::post_login,
-                api::create_account::create_account,
-                api::create_account::get_create_account,
-                api::login_successful::get_login_successful,
-                api::activate_account::get_activate_account,
-                api::password_reset::get_forgot_password,
-                api::password_reset::post_forgot_password,
-                api::password_reset::get_reset_password,
-                api::password_reset::post_reset_password,
-                api::logout::post_logout,
-                api::me::get_me,
-                api::users::get_users,
-                api::whitelist::get_whitelist,
-                api::whitelist::add_email_to_whitelist,
-                api::whitelist::delete_email_from_whitelist,
-                api::oauth_client::get_oauth_clients,
-                api::oauth_client::post_new_client,
-                api::oauth_client::delete_client,
-                api::oauth::authorize::get_authorization,
-                api::oauth::access_token::get_access_token,
-            ],
-        )
+        .mount("/api/core", core_routes())
+        .mount("/api/site", site_routes())
+        .mount("/api/oauth", oauth_routes())
+        .mount("/api/external", external_routes())
         .mount("/api/public", FileServer::from("static/public"))
         .register("/", catchers![unauthorized, forbidden])
         .manage(db_pool.clone())
@@ -98,7 +78,7 @@ struct UnauthorizedResponse(ResponseStatus<()>);
 impl<'r> Responder<'r, 'r> for UnauthorizedResponse {
     fn respond_to(self, req: &'r Request<'_>) -> rocket::response::Result<'r> {
         rocket::Response::build_from(self.0.respond_to(req)?)
-            .raw_header("location", "/api/login")
+            .raw_header("location", "/api/core/login")
             .ok()
     }
 }

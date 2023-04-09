@@ -26,7 +26,7 @@ const HEADER_PRAGMA: &str = "Pragma";
 const NO_CACHE: &str = "no-cache";
 const NO_STORE: &str = "no-store";
 
-const TOKEN_TYPE_BEARER: &str = "Bearer";
+pub const TOKEN_TYPE_BEARER: &str = "Bearer";
 
 // Second step in the oauth2 authorization flow.
 #[get("/token?<grant_type>&<redirect_uri>&<code>&<client_id>&<client_secret>")]
@@ -81,7 +81,7 @@ pub async fn get_access_token(
 
     ResponseStatus::ok_with(
         AccessTokenResponse {
-            access_token: access_token.access_token, // TODO: Implement
+            access_token: access_token.access_token,
             expires_in,
             token_type: TOKEN_TYPE_BEARER.to_string(),
         },

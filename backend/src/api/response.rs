@@ -15,13 +15,13 @@ pub struct ResponseStatus<T: Serialize + Clone> {
 }
 
 #[derive(Clone, Serialize)]
-pub struct NoContent();
+pub struct EmptyResponse();
 
 impl<T: Serialize + Clone> ResponseStatus<T> {
-    pub fn ok_no_content() -> ResponseStatus<NoContent> {
+    pub fn ok_no_content() -> ResponseStatus<EmptyResponse> {
         ResponseStatus {
-            status: Status::NoContent,
-            response_data: ResponseData::Success(NoContent {}),
+            status: Status::Ok, // Since we return the basic structure we can't respond with 204 NO CONTENT.
+            response_data: ResponseData::Success(EmptyResponse {}),
             headers: HashMap::new(),
         }
     }
@@ -91,6 +91,7 @@ pub enum ErrMsg {
     InvalidClientSecret,
     InvalidRedirectUri,
     InvalidCode,
+    InvalidAccessToken,
 }
 
 impl Display for ErrMsg {
