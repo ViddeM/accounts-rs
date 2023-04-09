@@ -6,8 +6,8 @@ import { faTrashCan } from "@fortawesome/free-regular-svg-icons";
 import TextField from "../../components/elements/TextField/TextField";
 import { faAdd } from "@fortawesome/free-solid-svg-icons";
 import styles from "./index.module.scss";
-import { useState } from "react";
-import { useRouter } from "next/router";
+import { FormEvent, useState } from "react";
+import { NextRouter, useRouter } from "next/router";
 
 type WhitelistProps = {
   error?: boolean;
@@ -26,7 +26,7 @@ const Whitelist = ({ error, whitelist }: WhitelistProps) => {
     return <div>Loading...</div>;
   }
 
-  const onSubmit = (e) => {
+  const onSubmit = (e: FormEvent) => {
     e.preventDefault();
     Api.whitelist
       .addToWhitelist(email)
@@ -60,49 +60,39 @@ const Whitelist = ({ error, whitelist }: WhitelistProps) => {
                       size="small"
                       variant="opaque"
                       type="button"
-                      onClick={() => {
-                        let c = confirm(
-                          "Are you sure you want to remove this email from the whitelist?"
-                        );
-                        if (c) {
-                          Api.whitelist
-                            .removeFromWhitelist(e)
-                            .then((_) => {
-                              router.replace(router.asPath).then((_) => {});
-                            })
-                            .catch((err) => {
-                              console.log("Feckery and buggery, err: ", err);
-                            });
-                        }
-                      }}
+                      onClick={() => onDelete(e, router)}
                     />
                   </td>
                 </tr>
               ))}
             </tbody>
             <tfoot>
-              <td className={styles.addToWhitelistRow}>
-                <label>Email:</label>
-                <TextField
-                  placeholder={"Email to whitelist"}
-                  maxLength={100}
-                  autoComplete="email"
-                  spellCheck={false}
-                  type="email"
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                  }}
-                />
-              </td>
-              <td align="center">
-                <IconButton
-                  type="submit"
-                  icon={faAdd}
-                  size="small"
-                  variant="opaque"
-                />
-              </td>
+              <tr>
+                <td className={styles.addToWhitelistRow}>
+                  <label>Email:</label>
+                  <TextField
+                    placeholder={"Email to whitelist"}
+                    maxLength={100}
+                    minLength={3}
+                    required
+                    autoComplete="email"
+                    spellCheck={false}
+                    type="email"
+                    value={email}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                    }}
+                  />
+                </td>
+                <td align="center">
+                  <IconButton
+                    type="submit"
+                    icon={faAdd}
+                    size="small"
+                    variant="opaque"
+                  />
+                </td>
+              </tr>
             </tfoot>
           </table>
         </form>
@@ -110,6 +100,21 @@ const Whitelist = ({ error, whitelist }: WhitelistProps) => {
     </CardLayout>
   );
 };
+
+function onDelete(email: string, router: NextRouter) {
+  let doRemove = confirm(
+    "Are you sure you want to remove this email from the whitelist?"
+  );
+  if (doRemove) {
+    Api.whitelist.removeFromWhitelist(email).then(() => {
+      alert("Email deleted from whitelist successfully");
+      router.reload();
+    }).catch(err => {
+      alert("Failed to delete email from whitelist!");
+      console.error("Err: ", err);
+    })
+  }
+}
 
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
   let response = await Api.whitelist.getAll(

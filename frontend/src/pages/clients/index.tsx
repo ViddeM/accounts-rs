@@ -8,7 +8,7 @@ import Link from "next/link";
 import {CREATE_CLIENT_ENDPOINT} from "../../api/Endpoints";
 import {IconButton} from "../../components/elements/Buttons/Buttons";
 import {faTrashCan} from "@fortawesome/free-regular-svg-icons";
-import {useRouter} from "next/router";
+import {NextRouter, useRouter} from "next/router";
 
 type ClientsProps = {
     error?: boolean;
@@ -50,22 +50,7 @@ const Clients = ({error, clients}: ClientsProps) => {
                                     variant="opaque"
                                     size="normal"
                                     icon={faTrashCan}
-                                    onClick={() => {
-                                        let deleteYes = confirm(
-                                            `Are you sure you want to delete client '${client.clientName}'?\nThis action cannot be undone.`
-                                        );
-
-                                        if (deleteYes) {
-                                            Api.oauthClients
-                                                .remove(client.id)
-                                                .then(() => {
-                                                    router.reload();
-                                                })
-                                                .catch((err) => {
-                                                    console.log("ERROR ERROR ", err);
-                                                });
-                                        }
-                                    }}
+                                    onClick={() => onDelete(client, router)}
                                 />
                             </div>
                         </div>
@@ -79,6 +64,25 @@ const Clients = ({error, clients}: ClientsProps) => {
         </CardLayout>
     );
 };
+
+async function onDelete(client: OauthClient, router: NextRouter) {
+    let deleteYes = confirm(
+        `Are you sure you want to delete client '${client.clientName}'?\nThis action cannot be undone.`
+    );
+
+    if (deleteYes) {
+        Api.oauthClients
+            .remove(client.id)
+            .then(() => {
+                alert("Client deleted");
+                router.reload();
+            })
+            .catch((err) => {
+                alert("Failed to delete client");
+                console.log("Failed to delete client, err: ", err);
+            });
+    }
+}
 
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
     let response = await Api.oauthClients.getAll(

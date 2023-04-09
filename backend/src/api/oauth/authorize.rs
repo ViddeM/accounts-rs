@@ -3,12 +3,12 @@ use rocket::{http::Status, response::Redirect, State};
 use sqlx::Pool;
 
 use crate::{
-    api::response::{ErrMsg, ResponseStatus},
-    db::DB,
-    services::{
-        oauth2_authorization_service::{self, Oauth2Error},
-        session_service::Session,
+    api::{
+        auth::session_guard::Session,
+        response::{ErrMsg, ResponseStatus},
     },
+    db::DB,
+    services::oauth2_authorization_service::{self, Oauth2Error},
 };
 
 const RESPONSE_TYPE_CODE: &str = "code";

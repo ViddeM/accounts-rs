@@ -1,6 +1,6 @@
+use crate::api::auth::session_guard::{set_session, Session};
 use crate::db::DB;
 use crate::services::login_service::LoginError;
-use crate::services::session_service::{set_session, Session};
 use crate::services::{login_service, password_service};
 use crate::util::config::Config;
 use mobc_redis::RedisConnectionManager;

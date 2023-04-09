@@ -1,5 +1,4 @@
 pub mod activate_account_service;
-pub mod admin_session_service;
 pub mod create_account_service;
 pub mod email_service;
 pub mod google_api_service;
@@ -9,7 +8,7 @@ pub mod oauth_client_service;
 pub mod password_service;
 pub mod redis_service;
 pub mod reset_password_service;
-pub mod session_service;
+pub mod user_info_service;
 pub mod user_service;
 pub mod users_service;
 pub mod whitelist_service;

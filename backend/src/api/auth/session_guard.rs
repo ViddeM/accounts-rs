@@ -11,9 +11,8 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::models::login_details::LoginDetails;
+use crate::services::redis_service;
 use crate::util::uuid::uuid_from_sqlx;
-
-use super::redis_service;
 
 const SESSION_COOKIE_KEY: &str = "accounts_rs_session";
 const SESSION_ID_LENGTH: usize = 48;

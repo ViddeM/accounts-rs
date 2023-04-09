@@ -32,41 +32,41 @@ interface RawApiResponse<ResponseData> {
 export const Api = {
   me: {
     getMe: (cookie?: string) => {
-      return get<Me>("/me", cookie);
+      return get<Me>("/site/me", cookie);
     },
     postLogout: () => {
-      return handleResponse(axios.post<RawApiResponse<void>>("/logout", {}));
+      return handleResponse(axios.post<RawApiResponse<void>>("/core/logout", {}));
     },
   },
   user: {
     getAll: (cookie?: string) => {
-      return get<{ users: User[] }>("/users", cookie);
+      return get<{ users: User[] }>("/site/users", cookie);
     },
   },
   whitelist: {
     getAll: (cookie?: string) => {
-      return get<{ emails: String[] }>("/whitelist", cookie);
+      return get<{ emails: String[] }>("/site/whitelist", cookie);
     },
     addToWhitelist: (email: string) => {
       return handleResponse(
-        axios.post<RawApiResponse<{}>>("/whitelist", {
+        axios.post<RawApiResponse<{}>>("/site/whitelist", {
           email: email,
         })
       );
     },
     removeFromWhitelist: (email: string) => {
       return handleResponse(
-        axios.delete<RawApiResponse<{}>>(`/whitelist/${email}`)
+        axios.delete<RawApiResponse<{}>>(`/site/whitelist/${email}`)
       );
     },
   },
   oauthClients: {
     getAll: (cookie?: string) => {
-      return get<{ oauthClients: OauthClient[] }>("/oauth_clients", cookie);
+      return get<{ oauthClients: OauthClient[] }>("/site/oauth_clients", cookie);
     },
     create: (clientName: string, redirectUri: string) => {
       return handleResponse(
-        axios.post<RawApiResponse<NewOAuthClient>>("/oauth_clients", {
+        axios.post<RawApiResponse<NewOAuthClient>>("/site/oauth_clients", {
           clientName: clientName,
           redirectUri: redirectUri,
         })
@@ -74,7 +74,7 @@ export const Api = {
     },
     remove: (id: string) => {
       return handleResponse(
-        axios.delete<RawApiResponse<{}>>(`/oauth_clients/${id}`)
+        axios.delete<RawApiResponse<{}>>(`/site/oauth_clients/${id}`)
       );
     },
   },
@@ -102,12 +102,14 @@ function handleResponse<T>(
 ): Promise<ApiResponse<T>> {
   return response
     .then((res) => {
+      console.log("GOT RES:::", res);
       return {
         data: res.data?.success ?? undefined,
         rawResponse: res,
       };
     })
     .catch((err) => {
+      console.log("GOT ERR:::", err);
       if (err.errno === -111) {
         // Failed to reach the server
         return {
@@ -123,6 +125,7 @@ function handleResponse<T>(
           rawResponse: err.response,
         };
       }
+      
       console.error("ERROR!!! ", err);
       // TODO: Implement handling of error message
 

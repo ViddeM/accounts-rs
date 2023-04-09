@@ -5,13 +5,12 @@ use sqlx::types::uuid::Uuid;
 use sqlx::Pool;
 
 use crate::{
+    api::auth::session_guard,
     db::{login_details_repository, new_transaction, reset_password_repository, DB},
     models::password_reset::PasswordReset,
     services::{email_service, email_service::EmailError, password_service},
     util::{accounts_error::AccountsError, config::Config, uuid::uuid_from_sqlx},
 };
-
-use super::session_service;
 
 #[derive(Debug, thiserror::Error)]
 pub enum ResetPasswordError {
@@ -183,7 +182,7 @@ pub async fn update_password(
     reset_password_repository::delete_password_reset(&mut transaction, password_reset_code.id)
         .await?;
 
-    session_service::reset_account_sessions(redis_pool, uuid_from_sqlx(account.account_id))
+    session_guard::reset_account_sessions(redis_pool, uuid_from_sqlx(account.account_id))
         .await
         .map_err(|err| {
             error!("Failed to reset account sessions, err: {}", err);

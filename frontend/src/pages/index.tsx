@@ -9,7 +9,7 @@ const Home = () => {
     router.push("/me").finally(() => {});
   }
 
-  return <DefaultLayout>Hello and welcome to le Accounts-RS</DefaultLayout>;
+  return <DefaultLayout>Hello and welcome to Accounts-RS</DefaultLayout>;
 };
 
 export default Home;

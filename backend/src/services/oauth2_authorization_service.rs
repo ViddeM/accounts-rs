@@ -44,7 +44,7 @@ const AUTHORIZATION_KEY_REDIS_PREFIX: &str = "authorization_codes";
 const AUTHORIZATION_CODE_EXPIRATION_SECONDS: usize = 5 * 60;
 
 const ACCESS_TOKEN_LENGTH: usize = 128;
-const ACCESS_TOKEN_KEY_REDIS_PREFIX: &str = "access_tokens";
+pub const ACCESS_TOKEN_KEY_REDIS_PREFIX: &str = "access_tokens";
 // 1 hour
 const ACCESS_TOKEN_EXPIRATION_SECONDS: i64 = 60 * 60;
 

@@ -23,7 +23,7 @@ const Me = () => {
                         <p>Email:</p> {me?.email}
                     </div>
                 </div>
-                <Link href={"/api/forgot_password"} className={styles.resetPasswordLink}>
+                <Link href={"/api/core/forgot_password"} className={styles.resetPasswordLink}>
                     Reset password
                 </Link>
             </div>

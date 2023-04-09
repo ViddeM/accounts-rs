@@ -1,9 +1,9 @@
 use mobc_redis::RedisConnectionManager;
 use rocket::{http::CookieJar, response::Redirect, State};
 
-use crate::services::{
-    redis_service,
-    session_service::{delete_session_cookie, Session},
+use crate::{
+    api::auth::session_guard::{delete_session_cookie, Session},
+    services::redis_service,
 };
 
 #[post("/logout")]
