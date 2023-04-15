@@ -3,7 +3,7 @@ import TextField from "../../components/elements/TextField/TextField";
 import styles from "./create.module.scss";
 import { Button } from "../../components/elements/Buttons/Buttons";
 import { Api } from "../../api/Api";
-import { useState } from "react";
+import { FormEvent, useState } from "react";
 import { useRouter } from "next/router";
 import { useModal } from "../../hooks/useModal";
 import { CLIENTS_ENDPOINT } from "../../api/Endpoints";
@@ -18,7 +18,7 @@ const CreateClient = () => {
   const [error, setError] = useState<undefined | string>(undefined);
   const { openModal } = useModal();
 
-  const onSubmit = (e) => {
+  const onSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     Api.oauthClients
       .create(clientName, redirectUri)
@@ -28,9 +28,9 @@ const CreateClient = () => {
           content: `The client has been created successfully, below you will find the client id and client secret necessary later.
 Make sure to write these down as the client secret will not be viewable after this point.
                 
-Client ID: ${resp.data.clientId}
+Client ID: ${resp.data!!.clientId}
                 
-Client Secret: ${resp.data.clientSecret}`,
+Client Secret: ${resp.data!!.clientSecret}`,
           confirmButton: {
             text: "Ok",
             onClick: () => {
