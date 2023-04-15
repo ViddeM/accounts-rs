@@ -1,6 +1,5 @@
 import React, { useContext } from "react";
-
-import { ModalProps } from "../components/views/Modal/Modal";
+import { ModalProps } from "../components/views/modal/Modal";
 
 export interface ModalContext {
   openModal: (props: ModalProps) => void;
