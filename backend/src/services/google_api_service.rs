@@ -76,6 +76,7 @@ pub async fn retrieve_token(config: &Config) -> Result<String, GoogleApiError> {
     let jwt = create_jwt(config)?;
 
     let client = reqwest::Client::new();
+
     // GoogleAuthResponse
     let response_text = client
         .post(&config.service_account.token_uri)
