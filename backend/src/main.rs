@@ -40,6 +40,12 @@ async fn rocket() -> _ {
         .connect(&config.database_url)
         .await
         .expect("Failed to connect to DB");
+
+    sqlx::migrate!("./migrations")
+        .run(&db_pool)
+        .await
+        .expect("Failed to run migrations");
+
     db::init(&db_pool).await.expect("Failed to initialize db");
 
     // Setup Redis cache
