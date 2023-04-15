@@ -34,7 +34,7 @@ impl From<sqlx::Error> for CreateAccountError {
     }
 }
 
-const ACTIVATE_ACCOUNT_ENDPOINT: &str = "/api/activate_account";
+const ACTIVATE_ACCOUNT_ENDPOINT: &str = "/api/core/activate_account";
 
 pub async fn create_account(
     config: &State<Config>,
