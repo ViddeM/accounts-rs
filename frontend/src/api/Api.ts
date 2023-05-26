@@ -10,6 +10,9 @@ if (typeof window === "undefined") {
   baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "/api";
 }
 
+console.log(
+  `<====================================== BASE URL: [${baseUrl}] ======================================>`
+);
 axios.defaults.baseURL = baseUrl;
 
 axios.interceptors.request.use(
@@ -35,7 +38,9 @@ export const Api = {
       return get<Me>("/site/me", cookie);
     },
     postLogout: () => {
-      return handleResponse(axios.post<RawApiResponse<void>>("/core/logout", {}));
+      return handleResponse(
+        axios.post<RawApiResponse<void>>("/core/logout", {})
+      );
     },
   },
   user: {
@@ -62,7 +67,10 @@ export const Api = {
   },
   oauthClients: {
     getAll: (cookie?: string) => {
-      return get<{ oauthClients: OauthClient[] }>("/site/oauth_clients", cookie);
+      return get<{ oauthClients: OauthClient[] }>(
+        "/site/oauth_clients",
+        cookie
+      );
     },
     create: (clientName: string, redirectUri: string) => {
       return handleResponse(
@@ -125,7 +133,7 @@ function handleResponse<T>(
           rawResponse: err.response,
         };
       }
-      
+
       console.error("ERROR!!! ", err);
       // TODO: Implement handling of error message
 
