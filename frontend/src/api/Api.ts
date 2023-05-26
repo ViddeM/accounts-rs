@@ -10,9 +10,6 @@ if (typeof window === "undefined") {
   baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "/api";
 }
 
-console.log(
-  `<====================================== BASE URL: [${baseUrl}] ======================================>`
-);
 axios.defaults.baseURL = baseUrl;
 
 axios.interceptors.request.use(
