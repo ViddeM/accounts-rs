@@ -49,20 +49,22 @@ impl<'r> FromRequest<'r> for AccessTokenAuth {
         let bearer_token = match auth_header {
             Some(s) => s.to_string(),
             None => {
+                error!("Auth failed, missing bearer token header");
                 return Outcome::Failure((
                     Status::Unauthorized,
                     AccessTokenError::MissingAuthHeader,
-                ))
+                ));
             }
         };
 
         let access_token = match bearer_token.strip_prefix(&format!("{TOKEN_TYPE_BEARER} ")) {
             Some(t) => t,
             None => {
+                error!("Invalid bearer token");
                 return Outcome::Failure((
                     Status::Unauthorized,
                     AccessTokenError::InvalidAuthHeader,
-                ))
+                ));
             }
         };
 
