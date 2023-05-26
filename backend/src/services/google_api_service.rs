@@ -14,7 +14,7 @@ pub enum GoogleApiError {
     OpenSSLError(#[from] openssl::error::ErrorStack),
     #[error("JWT error")]
     JwtError(#[from] jwt::Error),
-    #[error("Reqwest error")]
+    #[error("Reqwest error `{0}`")]
     ReqwestError(#[from] reqwest::Error),
     #[error("Google api error")]
     GoogleApiError,
