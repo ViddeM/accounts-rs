@@ -6,7 +6,7 @@ on:
 jobs:
   build:
     uses:
-      ./github/workflows/backend.yml
+      ./github/workflows/backend.yml@v1
 
   deploy:
     runs-on: ubuntu-latest
