@@ -39,6 +39,7 @@ pub struct Config {
     pub backend_address: String,
     pub offline_mode: bool,
     pub redis_url: String,
+    pub log_db_statements: bool,
 }
 
 impl Config {
@@ -78,6 +79,7 @@ impl Config {
             backend_address: load_env_str(String::from("BACKEND_ADDRESS"))?,
             offline_mode: load_env_bool(String::from("OFFLINE_MODE"))?,
             redis_url: load_env_str(String::from("REDIS_URL"))?,
+            log_db_statements: load_env_bool(String::from("LOG_DB_STATEMENTS"))?,
         })
     }
 }

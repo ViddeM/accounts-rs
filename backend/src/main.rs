@@ -2,6 +2,8 @@
 #[macro_use]
 extern crate rocket;
 
+use std::str::FromStr;
+
 use api::core::core_routes;
 use api::external::external_routes;
 use api::frontend::site_routes;
@@ -11,7 +13,8 @@ use rocket::http::Status;
 use rocket::response::Responder;
 use rocket::{fs::FileServer, Request};
 use rocket_dyn_templates::Template;
-use sqlx::postgres::PgPoolOptions;
+use sqlx::postgres::{PgConnectOptions, PgPoolOptions};
+use sqlx::ConnectOptions;
 use tokio::task;
 
 use crate::util::config::Config;
@@ -35,9 +38,16 @@ async fn rocket() -> _ {
     let config = Config::new().expect("Failed to load config");
 
     // Setup DB
+    let mut pg_options =
+        PgConnectOptions::from_str(&config.database_url).expect("Invalid database url provided");
+
+    if !config.log_db_statements {
+        pg_options.disable_statement_logging();
+    }
+
     let db_pool = PgPoolOptions::new()
         .max_connections(5)
-        .connect(&config.database_url)
+        .connect_with(pg_options)
         .await
         .expect("Failed to connect to DB");
 
