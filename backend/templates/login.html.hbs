@@ -4,6 +4,7 @@
 <head>
     <title>Login</title>
     <link rel="stylesheet" type="text/css" href="/api/public/styles.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="/api/public/login_styles.css" media="screen" />
 </head>
 
 <body>
@@ -20,20 +21,26 @@
                 </div>
                 <div class="form-row">
                     <label for="password">Password: </label>
-                    <input type="password" form="login-form" id="password" maxlength={{max_password_len}}
-                        minlength={{min_password_len}} placeholder="password" required="required" name="password"
-                        autocomplete="current-password" />
+                    <div class="password-col">
+                        <input type="password" form="login-form" id="password" maxlength={{max_password_len}}
+                            minlength={{min_password_len}} placeholder="password" required="required" name="password"
+                            autocomplete="current-password" />
+
+                        <a class="forgot-password" href="/api/core/forgot_password">Forgot password?</a>
+                    </div>
                 </div>
+    
                 {{#if error}}
                 <p class="error-message">{{error}}</p>
                 {{/if}}
-                <input type="submit" form="login-form" id="submit" value="Login" />
+
+                <div class="form-row spaced-row">
+                    <a href="/api/core/create_account" class="button">Create account</a>
+                    <input class="button" type="submit" form="login-form" id="submit" value="Login" />
+                </div>
             </form>
 
-            <a href="/api/core/create_account">Create account</a>
-            <a href="/api/core/forgot_password">Forgot password?</a>
         </div>
     </div>
 </body>
-
 </html>

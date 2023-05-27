@@ -22,9 +22,14 @@ p {
 }
 
 a {
-    color: inherit;
+    color: green;
     text-decoration: none;
 }
+
+a:hover {
+    text-decoration: underline;
+}
+
 
 * {
     box-sizing: border-box;
@@ -59,4 +64,21 @@ input {
 
 .error-message {
     color: red;
+}
+
+.button {
+    border-radius: 5px;
+    background-color: white;
+    color: black;
+    padding: 5px;
+    min-width: 80px;
+    border: 1px solid gray;
+    margin-top: 1rem;
+    font-size: 14px;
+}
+
+.button:hover {
+    cursor: pointer;
+    background: #EFEFEF;
+    text-decoration: none;
 }

@@ -1,0 +1,16 @@
+
+
+.password-col {
+    display: flex;
+    flex-direction: column;
+}
+
+.forgot-password {
+    font-size: 0.5rem;
+    margin-left: 5px;
+    color: #505050;
+}
+
+.spaced-row {
+    justify-content: space-between;
+}
