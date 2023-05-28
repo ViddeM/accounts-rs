@@ -4,7 +4,7 @@ use mobc_redis::redis::AsyncCommands;
 use mobc_redis::RedisConnectionManager;
 use rand::distributions::Alphanumeric;
 use rand::{thread_rng, Rng};
-use rocket::http::{Cookie, CookieJar, Status};
+use rocket::http::{Cookie, CookieJar, SameSite, Status};
 use rocket::request::{FromRequest, Request};
 use rocket::State;
 use serde::{Deserialize, Serialize};
@@ -196,6 +196,7 @@ pub async fn set_session(
     cookies.add_private(
         Cookie::build(SESSION_COOKIE_KEY, session_id)
             .secure(true)
+            .same_site(SameSite::Lax)
             .finish(),
     );
 
