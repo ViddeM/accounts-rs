@@ -8,9 +8,6 @@ let baseUrl = "/api";
 // Check if we're server side
 if (typeof window === "undefined") {
   baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "/api";
-  console.log(`IS SERVERSIDE, BASEURL [${baseUrl}]`);
-} else {
-  console.log(`IS CLIENT SIDE, baseURL [${baseUrl}]`);
 }
 
 axios.defaults.baseURL = baseUrl;
