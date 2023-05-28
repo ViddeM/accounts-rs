@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use chrono::Utc;
 use mobc_redis::RedisConnectionManager;
-use rocket::{http::Status, State};
+use rocket::{form::Form, http::Status, State};
 use serde::Serialize;
 use sqlx::Pool;
 
@@ -28,28 +28,33 @@ const NO_STORE: &str = "no-store";
 
 pub const TOKEN_TYPE_BEARER: &str = "Bearer";
 
-// Second step in the oauth2 authorization flow.
-#[get("/token?<grant_type>&<redirect_uri>&<code>&<client_id>&<client_secret>")]
-pub async fn get_access_token(
-    db_pool: &State<Pool<DB>>,
-    redis_pool: &State<mobc::Pool<RedisConnectionManager>>,
+#[derive(FromForm)]
+pub struct AccessTokenRequest {
+    grant_type: String,
     redirect_uri: String,
     code: String,
     client_id: String,
     client_secret: String,
-    grant_type: String,
+}
+
+// Second step in the oauth2 authorization flow.
+#[get("/token", data = "<request>")]
+pub async fn get_access_token(
+    db_pool: &State<Pool<DB>>,
+    redis_pool: &State<mobc::Pool<RedisConnectionManager>>,
+    request: Form<AccessTokenRequest>,
 ) -> ResponseStatus<AccessTokenResponse> {
-    if grant_type != GRANT_TYPE_AUTHORIZATION_CODE {
+    if request.grant_type != GRANT_TYPE_AUTHORIZATION_CODE {
         return ResponseStatus::err(Status::UnprocessableEntity, ErrMsg::InvalidGrantType);
     }
 
     let access_token = match oauth2_authorization_service::get_access_token(
         db_pool,
         redis_pool,
-        client_id,
-        client_secret,
-        redirect_uri,
-        code,
+        request.client_id.clone(),
+        request.client_secret.clone(),
+        request.redirect_uri.clone(),
+        request.code.clone(),
     )
     .await
     {
