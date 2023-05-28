@@ -30,7 +30,7 @@ use mobc::Pool;
 use mobc_redis::redis;
 use mobc_redis::RedisConnectionManager;
 
-const MAX_REDIS_CONNECTONS: u64 = 20;
+const MAX_REDIS_CONNECTIONS: u64 = 20;
 
 #[launch]
 async fn rocket() -> _ {
@@ -63,7 +63,7 @@ async fn rocket() -> _ {
         .unwrap_or_else(|_| panic!("Failed to connect to redis on URL {}", config.redis_url));
     let redis_manager = RedisConnectionManager::new(redis_client);
     let redis_pool = Pool::builder()
-        .max_open(MAX_REDIS_CONNECTONS)
+        .max_open(MAX_REDIS_CONNECTIONS)
         .build(redis_manager);
 
     // Test redis connection
