@@ -1,7 +1,7 @@
 on:
   push:
     tags:
-      - '*'
+      - 'backend-v*'
  
 name: "Backend CD"
 
@@ -14,6 +14,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      
+      - name: Strip tag name prefix
+        run: echo "TAG=$(echo 'backend-v1.2.3" | sed -e 's/^backend-//')" >> $GITHUB_ENV
+        # run: echo "TAG=$(echo $GITHUB_SHA | cut -c 1-6)" >> $GITHUB_ENV
+      - name: Print tag name
+        run: echo "TAG=[$TAG]"
 
       - name: Setup up docker buildx
         id: buildx
