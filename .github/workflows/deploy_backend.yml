@@ -17,8 +17,6 @@ jobs:
       
       - name: Strip tag name prefix
         run: echo "TAG=$(echo 'backend-v1.2.3' | sed -e 's/^backend-//')" >> $GITHUB_ENV
-      - name: Print tag name
-        run: echo "TAG=[$TAG]"
 
       - name: Setup up docker buildx
         id: buildx
@@ -30,6 +28,9 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: "Print final tag"
+        run: echo "Pushing to docker hub with tag viddem/accounts-rs-backend:$TAG"
+
       - name: Build and push
         id: docker_build
         uses: docker/build-push-action@v2
@@ -37,4 +38,4 @@ jobs:
           push: true
           context: ./backend
           file: ./backend/Dockerfile
-          tags: viddem/accounts-rs-backend:${{ github.ref_name }}
+          tags: viddem/accounts-rs-backend:$TAG
