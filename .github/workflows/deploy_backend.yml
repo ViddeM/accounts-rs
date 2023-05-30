@@ -32,4 +32,4 @@ jobs:
           push: true
           context: ./backend
           file: ./backend/Dockerfile
-          tags: ${{ GITHUB_REF_NAME }}
+          tags: ${{ vars.GITHUB_REF_NAME }}
