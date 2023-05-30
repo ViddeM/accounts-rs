@@ -32,4 +32,4 @@ jobs:
           push: true
           context: ./backend
           file: ./backend/Dockerfile
-          tags: viddem/accounts-rs-backend:${{ vars.GITHUB_REF_NAME }}
+          tags: viddem/accounts-rs-backend:${{ github.ref_name }}
