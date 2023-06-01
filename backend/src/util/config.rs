@@ -10,7 +10,7 @@ use std::{env, fs, io};
 pub enum ConfigError {
     #[error("Environment variable error")]
     EnvVarError(#[from] VarError),
-    #[error("Empty variable error")]
+    #[error("Empty variable error `{0}`")]
     VarEmpty(String),
     #[error("Serde json error")]
     SerdeJsonError(#[from] serde_json::Error),

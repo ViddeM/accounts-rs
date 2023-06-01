@@ -1,23 +1,14 @@
-use std::collections::HashMap;
-
 use chrono::Utc;
 use mobc_redis::RedisConnectionManager;
-use rocket::{form::Form, http::Status, State};
+use rocket::{form::Form, http::Status, serde::json::Json, Response, State};
 use serde::Serialize;
 use sqlx::Pool;
 
 use crate::{
-    api::response::{ErrMsg, ResponseStatus},
     db::DB,
     services::oauth2_authorization_service::{self, Oauth2Error},
 };
-
-#[derive(Serialize, Clone)]
-pub struct AccessTokenResponse {
-    access_token: String,
-    expires_in: u32,
-    token_type: String,
-}
+use rocket::response::Responder;
 
 const GRANT_TYPE_AUTHORIZATION_CODE: &str = "authorization_code";
 const HEADER_CACHE_CONTROL: &str = "Cache-Control";
@@ -28,7 +19,7 @@ const NO_STORE: &str = "no-store";
 
 pub const TOKEN_TYPE_BEARER: &str = "Bearer";
 
-#[derive(FromForm)]
+#[derive(FromForm, Debug)]
 pub struct AccessTokenRequest {
     grant_type: String,
     redirect_uri: String,
@@ -37,15 +28,35 @@ pub struct AccessTokenRequest {
     client_secret: String,
 }
 
+#[derive(Serialize, Clone, Debug)]
+pub struct AccessTokenResponse {
+    access_token: String,
+    expires_in: u32,
+    token_type: String,
+}
+
+pub enum PostAccessTokenResponse {
+    Success(Json<AccessTokenResponse>),
+    Error(String, Status),
+}
+
+#[derive(Serialize, Clone, Debug)]
+pub struct AccessTokenErrorResponse {
+    message: String,
+}
+
 // Second step in the oauth2 authorization flow.
-#[get("/token", data = "<request>")]
-pub async fn get_access_token(
+#[post("/token", data = "<request>")]
+pub async fn post_access_token(
     db_pool: &State<Pool<DB>>,
     redis_pool: &State<mobc::Pool<RedisConnectionManager>>,
     request: Form<AccessTokenRequest>,
-) -> ResponseStatus<AccessTokenResponse> {
+) -> PostAccessTokenResponse {
     if request.grant_type != GRANT_TYPE_AUTHORIZATION_CODE {
-        return ResponseStatus::err(Status::UnprocessableEntity, ErrMsg::InvalidGrantType);
+        return PostAccessTokenResponse::Error(
+            String::from("Invalid grant type"),
+            Status::UnprocessableEntity,
+        );
     }
 
     let access_token = match oauth2_authorization_service::get_access_token(
@@ -60,20 +71,35 @@ pub async fn get_access_token(
     {
         Ok(access_token) => access_token,
         Err(Oauth2Error::NoClientWithId) => {
-            return ResponseStatus::err(Status::BadRequest, ErrMsg::InvalidClientId)
+            return PostAccessTokenResponse::Error(
+                String::from("Invalid client ID"),
+                Status::BadRequest,
+            );
         }
         Err(Oauth2Error::InvalidRedirectUri) => {
-            return ResponseStatus::err(Status::BadRequest, ErrMsg::InvalidRedirectUri)
+            return PostAccessTokenResponse::Error(
+                String::from("Invalid redirect URI"),
+                Status::BadRequest,
+            );
         }
         Err(Oauth2Error::InvalidClientSecret) => {
-            return ResponseStatus::err(Status::BadRequest, ErrMsg::InvalidClientSecret)
+            return PostAccessTokenResponse::Error(
+                String::from("Invalid client secret"),
+                Status::BadRequest,
+            );
         }
         Err(Oauth2Error::InvalidCode) => {
-            return ResponseStatus::err(Status::BadRequest, ErrMsg::InvalidCode)
+            return PostAccessTokenResponse::Error(
+                String::from("Invalid code"),
+                Status::BadRequest,
+            );
         }
         Err(err) => {
             error!("Failed to get access token, err: {}", err);
-            return ResponseStatus::internal_err();
+            return PostAccessTokenResponse::Error(
+                String::from("An internal server error occurred"),
+                Status::BadRequest,
+            );
         }
     };
 
@@ -84,13 +110,31 @@ pub async fn get_access_token(
     }
     let expires_in = expires_in as u32; // Just checked that it's not negative so this is safe.
 
-    ResponseStatus::ok_with(
-        AccessTokenResponse {
-            access_token: access_token.access_token,
-            expires_in,
-            token_type: TOKEN_TYPE_BEARER.to_string(),
-        },
-        Status::Ok,
-        HashMap::from([(HEADER_CACHE_CONTROL, NO_STORE), (HEADER_PRAGMA, NO_CACHE)]),
-    )
+    let access_token_response = AccessTokenResponse {
+        access_token: access_token.access_token,
+        expires_in,
+        token_type: TOKEN_TYPE_BEARER.to_string(),
+    };
+
+    PostAccessTokenResponse::Success(Json(access_token_response))
+}
+
+impl<'r> Responder<'r, 'static> for PostAccessTokenResponse {
+    fn respond_to(self, request: &'r rocket::Request<'_>) -> rocket::response::Result<'static> {
+        match self {
+            PostAccessTokenResponse::Success(content) => {
+                let mut response = Response::build_from(content.respond_to(request)?);
+                response.status(Status::Ok);
+                response.raw_header(HEADER_CACHE_CONTROL, NO_STORE);
+                response.raw_header(HEADER_PRAGMA, NO_CACHE);
+                response.ok()
+            }
+            PostAccessTokenResponse::Error(msg, status) => {
+                let err_response = Json(AccessTokenErrorResponse { message: msg });
+                let mut response = Response::build_from(err_response.respond_to(request)?);
+                response.status(status);
+                response.ok()
+            }
+        }
+    }
 }

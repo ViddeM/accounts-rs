@@ -34,18 +34,6 @@ impl<T: Serialize + Clone> ResponseStatus<T> {
         }
     }
 
-    pub fn ok_with(
-        data: T,
-        status: Status,
-        map: HashMap<&'static str, &'static str>,
-    ) -> ResponseStatus<T> {
-        ResponseStatus {
-            status,
-            response_data: ResponseData::Success(data),
-            headers: map,
-        }
-    }
-
     pub fn err(status: Status, msg: ErrMsg) -> ResponseStatus<T> {
         ResponseStatus {
             status,
@@ -87,10 +75,7 @@ pub enum ErrMsg {
     OauthClientNameTaken,
     InvalidClientId,
     InvalidResponseType,
-    InvalidGrantType,
-    InvalidClientSecret,
     InvalidRedirectUri,
-    InvalidCode,
     InvalidAccessToken,
 }
 
