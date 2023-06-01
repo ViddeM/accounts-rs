@@ -12,11 +12,15 @@ jobs:
 
   deploy:
     runs-on: ubuntu-latest
+    needs:
+      - build
+      - test
+      - lint    
     steps:
       - uses: actions/checkout@v2
-      
+            
       - name: Strip tag name prefix
-        run: echo "TAG=$(echo 'backend-v1.2.3' | sed -e 's/^backend-//')" >> $GITHUB_ENV
+        run: echo "TAG=$(echo '${{ github.ref_name }}' | sed -e 's/^backend-//')" >> $GITHUB_ENV
       - name: Print tag name
         run: echo "TAG=[$TAG]"
 
@@ -37,4 +41,4 @@ jobs:
           push: true
           context: ./backend
           file: ./backend/Dockerfile
-          tags: viddem/accounts-rs-backend:${{ github.ref_name }}
+          tags: viddem/accounts-rs-backend:$TAG
