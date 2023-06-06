@@ -1,0 +1,56 @@
+on: 
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+  workflow_call:
+
+name: "Frontend CI"
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 16
+      - name: Install dependencies
+        run: yarn --frozen-lockfile
+        working-directory: frontend
+      - name: Build
+        run: yarn build
+        working-directory: frontend
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 16
+      - name: Install dependencies
+        run: yarn --frozen-lockfile
+        working-directory: frontend
+      - name: Test
+        run: yarn test
+        working-directory: frontend
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 16
+      - name: Install dependencies
+        run: yarn --frozen-lockfile
+        working-directory: frontend
+      - name: Build
+        run: yarn lint:check
+        working-directory: frontend
