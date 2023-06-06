@@ -13,16 +13,16 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
             
       - name: Strip tag name prefix
         run: |
-          echo "VERSION=$(echo '${{ github.ref_name }}' | sed -e 's/^backend-//')" >> $GITHUB_ENV
-          echo "TAG=viddem/accounts-rs-backend:$VERSION" >> $GITHUB_ENV
+          version=$(echo '${{ github.ref_name }}' | sed -e 's/^backend-//')
+          echo "TAG=viddem/accounts-rs-backend:$version" >> $GITHUB_ENV
+
       - name: Print tag name
         run: |
           echo "TAG=[$TAG]"
-          echo "VERSION=[$VERSION]"
 
       - name: Setup up docker buildx
         id: buildx
