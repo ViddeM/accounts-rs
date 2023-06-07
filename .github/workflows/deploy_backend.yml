@@ -19,7 +19,11 @@ jobs:
         id: tag
         run: |
           version=$(echo '${{ github.ref_name }}' | sed -e 's/^backend-//')
-          echo "TAG=viddem/accounts-rs-backend:$version" >> $GITHUB_ENV
+          echo "tag=viddem/accounts-rs-backend:$version" >> $GITHUB_OUTPUT
+      - name: Print tag
+        id: debug_tag
+        run: |
+          echo "Deploying to docker tag [${{ steps.tag.outputs.tag }}]"
 
       - name: Setup up docker buildx
         id: buildx
@@ -38,4 +42,4 @@ jobs:
           push: true
           context: ./backend
           file: ./backend/Dockerfile
-          tags: ${{ steps.tag.outputs.TAG }}
+          tags: ${{ steps.tag.outputs.tag }}
