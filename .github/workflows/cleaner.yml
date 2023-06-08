@@ -1,0 +1,14 @@
+name: Cleaner
+
+on: push
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Clean workflow runs
+      uses: dmvict/clean-workflow-runs@v1.2.1
+      with:
+        repo: viddem/accounts-rs
+        dry: true
