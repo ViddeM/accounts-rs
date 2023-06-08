@@ -12,3 +12,5 @@ jobs:
       with:
         repo: viddem/accounts-rs
         dry: true
+        save_period: 0
+        save_min_runs_number: 0
