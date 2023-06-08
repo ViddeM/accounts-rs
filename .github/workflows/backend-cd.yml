@@ -18,7 +18,7 @@ jobs:
       id: tag
       run: |
         version=$(echo '${{ github.ref_name }}' | sed -e 's/^backend-//')
-        echo "tag=viddem/accounts-rs-backend:$version" >> $GITHUB_OUTPUT
+        echo "tag=${{ secrets.DOCKERHUB_USERNAME }}/accounts-rs-backend:$version" >> $GITHUB_OUTPUT
     - name: Print tag
       id: debug_tag
       run: |
