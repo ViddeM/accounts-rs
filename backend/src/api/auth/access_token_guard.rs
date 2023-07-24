@@ -60,7 +60,7 @@ impl<'r> FromRequest<'r> for AccessTokenAuth {
         let access_token = match bearer_token.strip_prefix(&format!("{TOKEN_TYPE_BEARER} ")) {
             Some(t) => t,
             None => {
-                error!("Invalid bearer token");
+                error!("Invalid bearer token '{bearer_token}'");
                 return Outcome::Failure((
                     Status::Unauthorized,
                     AccessTokenError::InvalidAuthHeader,
