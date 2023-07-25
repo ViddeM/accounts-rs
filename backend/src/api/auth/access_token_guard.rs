@@ -73,10 +73,11 @@ impl<'r> FromRequest<'r> for AccessTokenAuth {
             match redis_service::redis_get_option::<AccessToken>(redis_pool, key).await {
                 Ok(Some(a)) => a,
                 Ok(None) => {
+                    println!("Invalid auth token {access_token}");
                     return Outcome::Failure((
                         Status::Unauthorized,
                         AccessTokenError::InvalidAuthHeader,
-                    ))
+                    ));
                 }
                 Err(e) => {
                     error!("Failed to get access token from redis, err: {e}");
