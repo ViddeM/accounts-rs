@@ -55,8 +55,9 @@ pub async fn get_login_page(session: Option<Session>) -> Either<Template, Redire
     Either::Left(Template::render(LOGIN_TEMPLATE_NAME, data))
 }
 
-#[post("/login", data = "<user_input>")]
+#[post("/login?<return_to>", data = "<user_input>")]
 pub async fn post_login(
+    return_to: Option<String>,
     db_pool: &State<sqlx::Pool<DB>>,
     config: &State<Config>,
     user_input: Form<LoginForm>,
@@ -92,5 +93,10 @@ pub async fn post_login(
         return Either::Left(login_error(&mut data, ERR_INTERNAL));
     }
 
-    Either::Right(Redirect::to(LOGIN_SUCCESSFUL_ADDRESS))
+    let redirect_address = match return_to {
+        Some(a) => a,
+        None => String::from(LOGIN_SUCCESSFUL_ADDRESS),
+    };
+
+    Either::Right(Redirect::to(redirect_address))
 }
