@@ -25,6 +25,8 @@ const MAX_PASSWORD_LEN_KEY: &str = "max_password_len";
 const LOGIN_SUCCESSFUL_ADDRESS: &str = "/";
 const EMAIL_KEY: &str = "email";
 
+const RETURN_TO_KEY: &str = "return_to";
+
 fn get_default_login_data() -> BTreeMap<&'static str, String> {
     let mut data: BTreeMap<&str, String> = BTreeMap::new();
     let min_password_length = password_service::MIN_PASSWORD_LENGTH.to_string();
@@ -39,25 +41,32 @@ fn login_error(data: &mut BTreeMap<&str, String>, error: &str) -> Template {
     Template::render(LOGIN_TEMPLATE_NAME, &data)
 }
 
-#[derive(FromForm)]
-pub struct LoginForm {
-    email: String,
-    password: String,
-}
-
-#[get("/login")]
-pub async fn get_login_page(session: Option<Session>) -> Either<Template, Redirect> {
+#[get("/login?<return_to>")]
+pub async fn get_login_page(
+    return_to: Option<String>,
+    session: Option<Session>,
+) -> Either<Template, Redirect> {
     if session.is_some() {
         return Either::Right(Redirect::to(LOGIN_SUCCESSFUL_ADDRESS));
     }
 
-    let data: BTreeMap<&str, String> = get_default_login_data();
+    let mut data: BTreeMap<&str, String> = get_default_login_data();
+    if let Some(return_to) = return_to {
+        data.insert(RETURN_TO_KEY, return_to);
+    }
+
     Either::Left(Template::render(LOGIN_TEMPLATE_NAME, data))
 }
 
-#[post("/login?<return_to>", data = "<user_input>")]
-pub async fn post_login(
+#[derive(FromForm)]
+pub struct LoginForm {
+    email: String,
+    password: String,
     return_to: Option<String>,
+}
+
+#[post("/login", data = "<user_input>")]
+pub async fn post_login(
     db_pool: &State<sqlx::Pool<DB>>,
     config: &State<Config>,
     user_input: Form<LoginForm>,
@@ -93,7 +102,7 @@ pub async fn post_login(
         return Either::Left(login_error(&mut data, ERR_INTERNAL));
     }
 
-    let redirect_address = match return_to {
+    let redirect_address = match user_input.return_to.clone() {
         Some(a) => a,
         None => String::from(LOGIN_SUCCESSFUL_ADDRESS),
     };

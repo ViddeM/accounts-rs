@@ -29,6 +29,8 @@
                         <a class="forgot-password" href="/api/core/forgot_password">Forgot password?</a>
                     </div>
                 </div>
+
+                <input type="hidden" name="return_to" id="return_to" value={{return_to}} autocomplete="off" />
     
                 {{#if error}}
                 <p class="error-message">{{error}}</p>

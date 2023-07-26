@@ -11,8 +11,9 @@ use crate::{
     services::oauth2_authorization_service::{self, Oauth2Error},
 };
 
+use crate::api::core::login::rocket_uri_macro_get_login_page;
+
 const RESPONSE_TYPE_CODE: &str = "code";
-const LOGIN_ENDPOINT: &str = "/api/core/login";
 
 /// First step in the oauth2 authorization flow.
 #[get("/authorize?<response_type>&<client_id>&<redirect_uri>&<state>")]
@@ -35,9 +36,23 @@ pub async fn get_authorization(
     let session = match session {
         Some(s) => s,
         None => {
-            return Ok(Redirect::found(format!(
-                "{LOGIN_ENDPOINT}?return_to=/authorize?response_type={response_type}&client_id={client_id}&redirect_uri={redirect_uri}&state={state}"
-            )))
+            let return_to = format!(
+                "/api/oauth/{}",
+                uri!(get_authorization(
+                    response_type,
+                    client_id,
+                    redirect_uri,
+                    state
+                ))
+                .to_string()
+            );
+
+            let login_uri = format!(
+                "/api/core/{}",
+                uri!(get_login_page(Some(return_to))).to_string()
+            );
+
+            return Ok(Redirect::found(login_uri));
         }
     };
 
