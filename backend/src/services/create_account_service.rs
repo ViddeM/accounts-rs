@@ -1,3 +1,4 @@
+use crate::api::core::activate_account::rocket_uri_macro_get_activate_account;
 use crate::db::{account_repository, whitelist_repository};
 use crate::db::{activation_code_repository, login_details_repository};
 use crate::db::{new_transaction, DB};
@@ -141,18 +142,24 @@ fn format_email_content(
     unactivated_account: &LoginDetails,
     activation_code: &ActivationCode,
 ) -> String {
-    let activate_account_uri = format!("{}{}", config.backend_address, ACTIVATE_ACCOUNT_ENDPOINT);
+    let activate_account_uri = format!(
+        "{}{}",
+        uri!(get_activate_account(
+            Some(unactivated_account.email.clone()),
+            Some(activation_code.code.to_string())
+        ))
+        .to_string(),
+        config.backend_address,
+    );
 
     format!(
         r#"Hi!
 
 An account has been created for accounts-rs with this email but it must be activated before use.
-To activate the account, go to the following address: {activate_account_uri}?email={email}&id={code}.
+To activate the account, go to the following address: {activate_account_uri}.
 
 If the account is not activated within 12 hours it will be deleted.
         "#,
         activate_account_uri = activate_account_uri,
-        email = unactivated_account.email,
-        code = activation_code.code
     )
 }
