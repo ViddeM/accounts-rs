@@ -12,6 +12,7 @@ use crate::{
 };
 
 const RESPONSE_TYPE_CODE: &str = "code";
+const LOGIN_ENDPOINT: &str = "/api/core/login";
 
 /// First step in the oauth2 authorization flow.
 #[get("/authorize?<response_type>&<client_id>&<redirect_uri>&<state>")]
@@ -22,7 +23,7 @@ pub async fn get_authorization(
     client_id: String,
     redirect_uri: String,
     state: String,
-    session: Session,
+    session: Option<Session>,
 ) -> Result<Redirect, ResponseStatus<()>> {
     if response_type != RESPONSE_TYPE_CODE {
         return Err(ResponseStatus::err(
@@ -30,6 +31,15 @@ pub async fn get_authorization(
             ErrMsg::InvalidResponseType,
         ));
     }
+
+    let session = match session {
+        Some(s) => s,
+        None => {
+            return Ok(Redirect::found(format!(
+                "{LOGIN_ENDPOINT}?return_to=/authorize?response_type={response_type}&client_id={client_id}&redirect_uri={redirect_uri}&state={state}"
+            )))
+        }
+    };
 
     let url = match oauth2_authorization_service::get_auth_token(
         db_pool,
