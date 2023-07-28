@@ -51,9 +51,12 @@ pub async fn get_login_page(
     }
 
     let mut data: BTreeMap<&str, String> = get_default_login_data();
-    if let Some(return_to) = return_to {
-        data.insert(RETURN_TO_KEY, return_to);
-    }
+    let return_to = if let Some(rt) = return_to {
+        rt
+    } else {
+        LOGIN_SUCCESSFUL_ADDRESS.to_string()
+    };
+    data.insert(RETURN_TO_KEY, return_to);
 
     Either::Left(Template::render(LOGIN_TEMPLATE_NAME, data))
 }
