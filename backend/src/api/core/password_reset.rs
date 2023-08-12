@@ -65,7 +65,7 @@ pub async fn post_forgot_password(
     }
 
     Either::Right(Redirect::to(format!(
-        "/api/reset_password?s=1&email={}",
+        "/api/core/reset_password?s=1&email={}",
         forgot_password.email
     )))
 }
