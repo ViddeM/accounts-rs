@@ -173,6 +173,14 @@ pub async fn get_access_token(
     Ok(access_token)
 }
 
+pub async fn get_access_token_basic_auth(
+    redis_pool: &State<mobc::Pool<RedisConnectionManager>>,
+    client_id: String,
+    account_id: Uuid,
+) -> Result<AccessToken, Oauth2Error> {
+    Ok(generate_access_token(redis_pool, client_id, account_id).await?)
+}
+
 async fn generate_access_token(
     redis_pool: &State<mobc::Pool<RedisConnectionManager>>,
     client_id: String,

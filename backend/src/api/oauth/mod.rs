@@ -7,5 +7,6 @@ pub fn oauth_routes() -> Vec<Route> {
     routes![
         authorize::get_authorization,
         access_token::post_access_token,
+        access_token::get_access_token,
     ]
 }
