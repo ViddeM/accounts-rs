@@ -231,7 +231,7 @@ pub async fn get_access_token(
     auth_header: AuthHeader,
     service: String,
     offline_token: Option<bool>,
-    client_id: String,
+    client_id: Option<String>,
     scope: Option<String>,
 ) -> AccessTokenResponse {
     info!(
@@ -259,7 +259,7 @@ pub async fn get_access_token(
 
     let access_token = match oauth2_authorization_service::get_access_token_basic_auth(
         &redis_pool,
-        client_id,
+        service,
         login_details.account_id,
     )
     .await

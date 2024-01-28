@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\nDELETE FROM whitelist\nWHERE email = $1\n    ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "60a91284f1609de0e0d04cd7e6ab2d8177ab17b052f1381663c8186a5965b8cb"
+}

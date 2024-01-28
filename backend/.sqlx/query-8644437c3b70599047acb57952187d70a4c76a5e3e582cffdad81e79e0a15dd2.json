@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\nDELETE\nFROM activation_code\nWHERE login_details = $1\n    ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "8644437c3b70599047acb57952187d70a4c76a5e3e582cffdad81e79e0a15dd2"
+}

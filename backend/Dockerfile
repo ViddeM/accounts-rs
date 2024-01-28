@@ -1,4 +1,4 @@
-FROM rust:1.68 as base
+FROM rust:1.75 as base
 
 ENV TZ=Europe/Stockholm
 ENV DEBIAN_FRONTEND=noninteractive
@@ -7,7 +7,7 @@ RUN apt update && apt install -y tzdata
 WORKDIR /app
 
 # Install required tools
-RUN cargo install sqlx-cli --version 0.6.3
+RUN cargo install sqlx-cli --version 0.7.3
 RUN cargo install strip_cargo_version
 
 # Install build-target for static linking
@@ -42,10 +42,6 @@ RUN rustup target add x86_64-unknown-linux-musl
 RUN SQLX_OFFLINE=true cargo build --release --target x86_64-unknown-linux-musl
 RUN strip target/x86_64-unknown-linux-musl/release/accounts_rs
 
-RUN ls -lah /app
-
-
-
 FROM scratch
 WORKDIR /
 
@@ -57,5 +53,3 @@ COPY --from=build /app/target/x86_64-unknown-linux-musl/release/accounts_rs ./ac
 COPY --from=build /app/static ./static
 COPY --from=build /app/templates ./templates
 COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-
-CMD ["./accounts_rs"]

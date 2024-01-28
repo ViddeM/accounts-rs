@@ -1,0 +1,72 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\nUPDATE login_details\nSET password        = $1,\n    password_nonces = $2,\n    modified_at     = NOW()\nWHERE account_id=$3\nRETURNING account_id, email, password, password_nonces, created_at, modified_at, activated_at, incorrect_password_count, account_locked_until\n    ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "account_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "email",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "password",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "password_nonces",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 5,
+        "name": "modified_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 6,
+        "name": "activated_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 7,
+        "name": "incorrect_password_count",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 8,
+        "name": "account_locked_until",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      true
+    ]
+  },
+  "hash": "1766cd0fc8be06b25faafc5a7c14623341749ca6ef3dd46c2d2ea03639ddeee5"
+}

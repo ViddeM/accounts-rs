@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\nUPDATE login_details\nSET\n    incorrect_password_count=$1,\n    account_locked_until=$2,\n    modified_at=NOW()\nWHERE account_id=$3\n",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Timestamptz",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "6ab44abcde941d1a69d973a96c1c7239a5030d22a8629908fd7668220b6dc0ff"
+}
