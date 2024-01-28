@@ -17,6 +17,6 @@ WHERE name = $1
         ",
         LOCAL_LOGIN_PROVIDER
     )
-    .fetch_one(transaction)
+    .fetch_one(&mut **transaction)
     .await?)
 }

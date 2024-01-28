@@ -20,7 +20,7 @@ RETURNING id, first_name, last_name, created_at, modified_at, authority as "auth
         first_name,
         last_name,
     )
-    .fetch_one(transaction)
+    .fetch_one(&mut **transaction)
     .await?)
 }
 
@@ -37,7 +37,7 @@ WHERE id = ANY($1)
     ",
         ids
     )
-    .execute(transaction)
+    .execute(&mut **transaction)
     .await?;
     Ok(())
 }
@@ -56,7 +56,7 @@ WHERE id = $1 AND authority = $2
         account_id,
         AuthorityLevel::Admin as _
     )
-    .fetch_optional(transaction)
+    .fetch_optional(&mut **transaction)
     .await?)
 }
 
@@ -73,7 +73,7 @@ WHERE id = $1
         "#,
         account_id
     )
-    .fetch_optional(transaction)
+    .fetch_optional(&mut **transaction)
     .await?)
 }
 
@@ -87,6 +87,6 @@ SELECT id, first_name, last_name, created_at, modified_at, authority AS "authori
 FROM account
     "#
     )
-    .fetch_all(transaction)
+    .fetch_all(&mut **transaction)
     .await?)
 }

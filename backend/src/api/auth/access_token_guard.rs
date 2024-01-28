@@ -38,10 +38,7 @@ impl<'r> FromRequest<'r> for AccessTokenAuth {
             Some(pool) => pool,
             None => {
                 error!("Failed to retrieve redis pool");
-                return Outcome::Failure((
-                    Status::InternalServerError,
-                    AccessTokenError::RedisError,
-                ));
+                return Outcome::Error((Status::InternalServerError, AccessTokenError::RedisError));
             }
         };
 
@@ -50,10 +47,7 @@ impl<'r> FromRequest<'r> for AccessTokenAuth {
             Some(s) => s.to_string(),
             None => {
                 error!("Auth failed, missing bearer token header");
-                return Outcome::Failure((
-                    Status::Unauthorized,
-                    AccessTokenError::MissingAuthHeader,
-                ));
+                return Outcome::Error((Status::Unauthorized, AccessTokenError::MissingAuthHeader));
             }
         };
 
@@ -61,10 +55,7 @@ impl<'r> FromRequest<'r> for AccessTokenAuth {
             Some(t) => t,
             None => {
                 error!("Invalid bearer token '{bearer_token}'");
-                return Outcome::Failure((
-                    Status::Unauthorized,
-                    AccessTokenError::InvalidAuthHeader,
-                ));
+                return Outcome::Error((Status::Unauthorized, AccessTokenError::InvalidAuthHeader));
             }
         };
 
@@ -74,14 +65,14 @@ impl<'r> FromRequest<'r> for AccessTokenAuth {
                 Ok(Some(a)) => a,
                 Ok(None) => {
                     println!("Invalid auth token {access_token}");
-                    return Outcome::Failure((
+                    return Outcome::Error((
                         Status::Unauthorized,
                         AccessTokenError::InvalidAuthHeader,
                     ));
                 }
                 Err(e) => {
                     error!("Failed to get access token from redis, err: {e}");
-                    return Outcome::Failure((
+                    return Outcome::Error((
                         Status::InternalServerError,
                         AccessTokenError::RedisError,
                     ));

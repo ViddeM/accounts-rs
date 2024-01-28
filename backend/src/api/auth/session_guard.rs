@@ -79,7 +79,7 @@ impl<'r> FromRequest<'r> for Session {
         let session_cookie = match request.cookies().get_private(SESSION_COOKIE_KEY) {
             Some(s) => s,
             None => {
-                return rocket::request::Outcome::Failure((
+                return rocket::request::Outcome::Error((
                     Status::Unauthorized,
                     SessionError::MissingCookie,
                 ));
@@ -95,7 +95,7 @@ impl<'r> FromRequest<'r> for Session {
             Some(p) => p,
             None => {
                 error!("Failed to retrieve redis pool");
-                return rocket::request::Outcome::Failure((
+                return rocket::request::Outcome::Error((
                     Status::InternalServerError,
                     SessionError::RedisPoolError,
                 ));
@@ -110,14 +110,14 @@ impl<'r> FromRequest<'r> for Session {
                     // Most likely, the session has expired
                     // Delete the invalid cookie and require re-login
                     delete_session_cookie(request.cookies()).await;
-                    return rocket::request::Outcome::Failure((
+                    return rocket::request::Outcome::Error((
                         Status::Unauthorized,
                         SessionError::MissingCookie,
                     ));
                 }
                 Err(err) => {
                     error!("Failed to retrieve session from redis, err: {}", err);
-                    return rocket::request::Outcome::Failure((
+                    return rocket::request::Outcome::Error((
                         Status::InternalServerError,
                         SessionError::RedisPoolError,
                     ));
@@ -134,7 +134,7 @@ impl<'r> FromRequest<'r> for Session {
                     "Failed to delete expired session (id = {}) from redis, err: {}",
                     session_id, e
                 );
-                return rocket::request::Outcome::Failure((
+                return rocket::request::Outcome::Error((
                     Status::InternalServerError,
                     SessionError::RedisPoolError,
                 ));
@@ -142,7 +142,7 @@ impl<'r> FromRequest<'r> for Session {
 
             delete_session_cookie(request.cookies()).await;
 
-            return rocket::request::Outcome::Failure((
+            return rocket::request::Outcome::Error((
                 Status::Unauthorized,
                 SessionError::MissingCookie,
             ));
@@ -194,10 +194,9 @@ pub async fn set_session(
         .or(Err(SessionError::CacheInsertion))?;
 
     cookies.add_private(
-        Cookie::build(SESSION_COOKIE_KEY, session_id)
+        Cookie::build((SESSION_COOKIE_KEY, session_id))
             .secure(true)
-            .same_site(SameSite::Lax)
-            .finish(),
+            .same_site(SameSite::Lax),
     );
 
     Ok(())

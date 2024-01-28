@@ -50,7 +50,7 @@ services:
 
 
   redis-ui:
-    image: patrikx3/p3x-redis-ui:2021.4.162
+    image: patrikx3/p3x-redis-ui:2024.4.104
     ports:
       - ${REDIS_UI_PORT}:7843
     volumes:

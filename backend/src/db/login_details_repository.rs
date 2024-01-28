@@ -19,7 +19,7 @@ WHERE account_id = $1
     ",
         account_id
     )
-    .fetch_optional(transaction)
+    .fetch_optional(&mut **transaction)
     .await?)
 }
 
@@ -36,7 +36,7 @@ WHERE email = $1
     ",
         email
     )
-    .fetch_optional(transaction)
+    .fetch_optional(&mut **transaction)
     .await?)
 }
 
@@ -59,7 +59,7 @@ RETURNING account_id, email, password, password_nonces, created_at, modified_at,
         password,
         password_nonces,
     )
-    .fetch_one(transaction)
+    .fetch_one(&mut **transaction)
     .await?)
 }
 
@@ -83,7 +83,7 @@ RETURNING account_id, email, password, password_nonces, created_at, modified_at,
         new_password_nonces,
         login_details.account_id,
     )
-    .fetch_one(transaction)
+    .fetch_one(&mut **transaction)
     .await?)
 }
 
@@ -100,7 +100,7 @@ WHERE account_id = ANY($1)
         ",
         account_ids
     )
-    .execute(transaction)
+    .execute(&mut **transaction)
     .await?;
     Ok(())
 }
@@ -120,7 +120,7 @@ WHERE account_id = $1
         ",
         account_id
     )
-    .execute(transaction)
+    .execute(&mut **transaction)
     .await?;
     Ok(())
 }
@@ -145,7 +145,7 @@ WHERE account_id=$3
         account_locked_until,
         account_id
     )
-    .execute(transaction)
+    .execute(&mut **transaction)
     .await?;
     Ok(())
 }

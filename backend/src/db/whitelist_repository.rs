@@ -18,7 +18,7 @@ WHERE email = $1 AND login_provider = $2
         email,
         LOCAL_LOGIN_PROVIDER
     )
-    .fetch_optional(transaction)
+    .fetch_optional(&mut **transaction)
     .await?)
 }
 
@@ -32,7 +32,7 @@ SELECT *
 FROM whitelist
     "#
     )
-    .fetch_all(transaction)
+    .fetch_all(&mut **transaction)
     .await?)
 }
 
@@ -49,7 +49,7 @@ RETURNING *
         "#,
         email
     )
-    .fetch_one(transaction)
+    .fetch_one(&mut **transaction)
     .await?)
 }
 
@@ -65,7 +65,7 @@ WHERE email = $1
     "#,
         email
     )
-    .execute(transaction)
+    .execute(&mut **transaction)
     .await?;
     Ok(())
 }

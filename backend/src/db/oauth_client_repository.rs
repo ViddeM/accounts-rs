@@ -23,7 +23,7 @@ RETURNING *
         client_name,
         redirect_uri
     )
-    .fetch_one(transaction)
+    .fetch_one(&mut **transaction)
     .await?)
 }
 
@@ -35,7 +35,7 @@ SELECT *
 FROM oauth_client
         "
     )
-    .fetch_all(transaction)
+    .fetch_all(&mut **transaction)
     .await?)
 }
 
@@ -52,7 +52,7 @@ WHERE client_name=$1
         ",
         client_name
     )
-    .fetch_optional(transaction)
+    .fetch_optional(&mut **transaction)
     .await?)
 }
 
@@ -70,7 +70,7 @@ RETURNING *
         ",
         id
     )
-    .fetch_optional(transaction)
+    .fetch_optional(&mut **transaction)
     .await?)
 }
 
@@ -87,6 +87,6 @@ WHERE client_id=$1
     ",
         client_id
     )
-    .fetch_optional(transaction)
+    .fetch_optional(&mut **transaction)
     .await?)
 }

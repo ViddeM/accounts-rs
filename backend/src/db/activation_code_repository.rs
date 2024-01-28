@@ -17,7 +17,7 @@ RETURNING id, login_details, code, created_at, modified_at
         ",
         login_details
     )
-    .fetch_one(transaction)
+    .fetch_one(&mut **transaction)
     .await?)
 }
 
@@ -35,7 +35,7 @@ RETURNING id, login_details, code, created_at, modified_at
         ",
         lifetime_minutes as f64
     )
-    .fetch_all(transaction)
+    .fetch_all(&mut **transaction)
     .await?)
 }
 
@@ -56,7 +56,7 @@ WHERE
         login_details,
         code
     )
-    .fetch_optional(transaction)
+    .fetch_optional(&mut **transaction)
     .await?)
 }
 
@@ -73,7 +73,7 @@ WHERE login_details = $1
     ",
         login_details
     )
-    .execute(transaction)
+    .execute(&mut **transaction)
     .await?;
     Ok(())
 }

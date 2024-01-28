@@ -31,16 +31,16 @@ impl<'r> FromRequest<'r> for AdminSession {
     async fn from_request(request: &'r rocket::Request<'_>) -> Outcome<Self, Self::Error> {
         let session = match request.guard::<Session>().await {
             Outcome::Success(s) => s,
-            Outcome::Failure((status, error)) => {
+            Outcome::Error((status, error)) => {
                 error!(
                     "Failed to retrieve session, status: {}, err: {}",
                     status, error
                 );
-                return Outcome::Failure((Status::Unauthorized, AdminSessionError::MissingSession));
+                return Outcome::Error((Status::Unauthorized, AdminSessionError::MissingSession));
             }
             Outcome::Forward(_) => {
                 error!("Failed to retrieve session, got forward response");
-                return Outcome::Failure((Status::Unauthorized, AdminSessionError::MissingSession));
+                return Outcome::Error((Status::Unauthorized, AdminSessionError::MissingSession));
             }
         };
 
@@ -48,7 +48,7 @@ impl<'r> FromRequest<'r> for AdminSession {
             Some(db) => db,
             None => {
                 error!("Failed to retrieve db pool!");
-                return Outcome::Failure((Status::InternalServerError, AdminSessionError::DBError));
+                return Outcome::Error((Status::InternalServerError, AdminSessionError::DBError));
             }
         };
 
@@ -56,7 +56,7 @@ impl<'r> FromRequest<'r> for AdminSession {
             Ok(t) => t,
             Err(err) => {
                 error!("Failed to create new transaction, err: {}", err);
-                return Outcome::Failure((Status::InternalServerError, AdminSessionError::DBError));
+                return Outcome::Error((Status::InternalServerError, AdminSessionError::DBError));
             }
         };
 
@@ -72,11 +72,11 @@ impl<'r> FromRequest<'r> for AdminSession {
                     "Account {} does not have admin clearance",
                     session.account_id
                 );
-                return Outcome::Failure((Status::Forbidden, AdminSessionError::UserNotAdmin));
+                return Outcome::Error((Status::Forbidden, AdminSessionError::UserNotAdmin));
             }
             Err(err) => {
                 error!("Failed to get account from DB, err: {}", err);
-                return Outcome::Failure((Status::InternalServerError, AdminSessionError::DBError));
+                return Outcome::Error((Status::InternalServerError, AdminSessionError::DBError));
             }
         };
 

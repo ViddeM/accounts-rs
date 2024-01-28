@@ -1,4 +1,6 @@
 use crate::util::config::Config;
+use base64::engine::general_purpose::STANDARD;
+use base64::Engine;
 use chrono::{Duration, Utc};
 use jwt;
 use jwt::{PKeyWithDigest, SignWithKey};
@@ -104,7 +106,7 @@ struct GoogleSendEmailRequest {
 
 impl GoogleSendEmailRequest {
     fn new(from: &str, to: &str, subject: &str, content: &str) -> Self {
-        let raw_message = base64::encode(format!(
+        let raw_message = STANDARD.encode(format!(
             "From: {}\r\nTo: {}\r\nSubject: {}\r\n\r\n{}\r\n",
             from, to, subject, content
         ));

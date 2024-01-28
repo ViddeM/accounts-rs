@@ -1,7 +1,6 @@
-use aes_gcm::NewAead;
-use aes_gcm::{Aes256Gcm, Key};
+use aes_gcm::{Aes256Gcm, Key, KeyInit};
 use argon2::{Algorithm, Argon2, Params, Version};
-use dotenv;
+use dotenvy;
 use serde::{Deserialize, Serialize};
 use std::env::VarError;
 use std::{env, fs, io};
@@ -44,7 +43,7 @@ pub struct Config {
 
 impl Config {
     pub fn new() -> ConfigResult<Config> {
-        dotenv::dotenv().ok();
+        dotenvy::dotenv().ok();
 
         let argon2 = Argon2::new(
             Algorithm::Argon2id,
@@ -62,7 +61,7 @@ impl Config {
         if pepper.len() != REQUIRED_PEPPER_BYTES {
             panic!("Pepper must be exactly {} bytes", REQUIRED_PEPPER_BYTES);
         }
-        let pepper_key = Key::from_slice(pepper.as_bytes());
+        let pepper_key: &Key<Aes256Gcm> = pepper.as_bytes().into();
         let pepper_cipher = Aes256Gcm::new(pepper_key);
 
         // Load service account file
