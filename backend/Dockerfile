@@ -30,7 +30,7 @@ RUN strip_cargo_version
 FROM base as build
 
 # Create a dummy binary for pre-compiling dependencies (for caching)
-RUN cargo init .
+RUN cargo init --bin
 COPY --from=strip-version /app/Cargo.* ./
 RUN cargo build --release --target x86_64-unknown-linux-musl
 
@@ -53,3 +53,5 @@ COPY --from=build /app/target/x86_64-unknown-linux-musl/release/accounts_rs ./ac
 COPY --from=build /app/static ./static
 COPY --from=build /app/templates ./templates
 COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+
+CMD ["./accounts_rs"]
