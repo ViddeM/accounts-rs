@@ -142,12 +142,12 @@ fn format_email_content(
 ) -> String {
     let activate_account_uri = format!(
         "{}{}",
+        config.backend_address,
         uri!(get_activate_account(
             Some(unactivated_account.email.clone()),
             Some(activation_code.code.to_string())
         ))
         .to_string(),
-        config.backend_address,
     );
 
     format!(
@@ -157,6 +157,8 @@ An account has been created for accounts-rs with this email but it must be activ
 To activate the account, go to the following address: {activate_account_uri}.
 
 If the account is not activated within 12 hours it will be deleted.
+
+If you did not register to accounts-rs, please ignore this email!
         "#,
         activate_account_uri = activate_account_uri,
     )
