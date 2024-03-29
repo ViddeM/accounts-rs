@@ -114,7 +114,7 @@ impl GoogleSendEmailRequest {
     }
 }
 
-// Note: the `/me/` is a parameter for the CLIENT_ID and
+// Note: the `/me/` is a parameter for the CLIENT_ID
 const SEND_EMAIL_ENDPOINT: &str = "https://gmail.googleapis.com/gmail/v1/users/me/messages/send";
 
 #[derive(Serialize, Deserialize)]
