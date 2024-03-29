@@ -38,7 +38,7 @@ RUN cargo build --release --target x86_64-unknown-linux-musl
 COPY . .
 
 # Compile the final binary
-RUN rustup target add x86_64-unknown-linux-musl
+# RUN rustup target add x86_64-unknown-linux-musl
 RUN SQLX_OFFLINE=true cargo build --release --target x86_64-unknown-linux-musl
 RUN strip target/x86_64-unknown-linux-musl/release/accounts_rs
 
