@@ -205,7 +205,7 @@ impl<'r> FromRequest<'r> for AuthHeader {
             }
         };
 
-        let Some((username, password)) = decoded_string.split_once(":") else {
+        let Some((username, password)) = decoded_string.split_once(':') else {
             error!(
                 "Failed to split username/password, invalid BASIC auth header, {decoded_string}"
             );
@@ -258,7 +258,7 @@ pub async fn get_access_token(
     };
 
     let access_token = match oauth2_authorization_service::get_access_token_basic_auth(
-        &redis_pool,
+        redis_pool,
         service,
         login_details.account_id,
     )

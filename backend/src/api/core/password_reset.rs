@@ -84,8 +84,8 @@ pub async fn get_reset_password(
         }
     }
 
-    data.insert(EMAIL_KEY, email.unwrap_or(String::new()));
-    data.insert(CODE_KEY, code.unwrap_or(String::new()));
+    data.insert(EMAIL_KEY, email.unwrap_or_default());
+    data.insert(CODE_KEY, code.unwrap_or_default());
 
     Template::render(RESET_PASSWORD_TEMPLATE_NAME, &data)
 }

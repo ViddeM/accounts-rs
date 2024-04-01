@@ -48,21 +48,19 @@ where
         RedisError::Internal
     })?;
 
-    match redis_conn
+    let Some(raw_result) = redis_conn
         .get::<String, Option<String>>(key)
         .await
-        .map_err(|err| {
-            error!("Failed to get from redis, err {}", err);
-            RedisError::Redis
-        })? {
-        Some(raw_result) => Ok(Some(serde_json::from_str::<T>(&raw_result).map_err(
-            |err| {
-                error!("Failed to parse json value from redis, err {}", err);
-                RedisError::Serde
-            },
-        )?)),
-        None => Ok(None),
-    }
+        .inspect_err(|err| error!("Failed to get from redis, err {}", err))
+        .map_err(|_| RedisError::Redis)?
+    else {
+        return Ok(None);
+    };
+
+    serde_json::from_str::<T>(&raw_result)
+        .inspect_err(|err| error!("Failed to parse json value from redis, err {}", err))
+        .map_err(|_| RedisError::Serde)
+        .map(Some)
 }
 
 pub async fn redis_set<T>(

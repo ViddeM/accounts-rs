@@ -1,4 +1,8 @@
 #![forbid(unsafe_code)]
+// `rocket` macros generate a bunch of clippy warnings.
+// TODO: remove these when updating rocket past 0.5.0.
+#![allow(clippy::blocks_in_conditions)]
+#![allow(clippy::to_string_in_format_args)]
 
 #[macro_use]
 extern crate rocket;

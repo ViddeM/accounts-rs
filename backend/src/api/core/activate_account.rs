@@ -32,8 +32,8 @@ pub async fn get_activate_account(
         return Template::render(ACTIVATE_ACCOUNT_TEMPLATE_NAME, data);
     }
 
-    let email = email.unwrap_or(String::new());
-    let id = id.unwrap_or(String::new());
+    let email = email.unwrap_or_default();
+    let id = id.unwrap_or_default();
 
     let code = match Uuid::parse_str(&id) {
         Err(err) => {

@@ -4,6 +4,7 @@ use aes_gcm::{Error, Nonce};
 use argon2::password_hash::rand_core::OsRng;
 use argon2::password_hash::SaltString;
 use argon2::{PasswordHash, PasswordHasher, PasswordVerifier};
+use std::fmt::Write;
 use std::num::ParseIntError;
 use std::str::Utf8Error;
 
@@ -62,8 +63,8 @@ pub fn hash_and_encrypt_password(
         .pepper_cipher
         .encrypt(nonce, password_hash.as_bytes())?;
 
-    let hexed_password: String = to_hex(peppered_password_hash);
-    let hexed_nonces: String = to_hex(nonce_arr.to_vec());
+    let hexed_password: String = to_hex(&peppered_password_hash);
+    let hexed_nonces: String = to_hex(&nonce_arr);
 
     Ok((hexed_password, hexed_nonces))
 }
@@ -127,8 +128,11 @@ pub fn verify_password(
         .is_ok()
 }
 
-fn to_hex(bytes: Vec<u8>) -> String {
-    bytes.iter().map(|b| format!("{:02X}", b)).collect()
+fn to_hex(bytes: &[u8]) -> String {
+    bytes.iter().fold(String::new(), |mut output, b| {
+        _ = write!(&mut output, "{b:02X}");
+        output
+    })
 }
 
 fn from_hex(hex_str: String) -> Result<Vec<u8>, ParseIntError> {

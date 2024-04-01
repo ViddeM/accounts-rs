@@ -178,7 +178,7 @@ pub async fn get_access_token_basic_auth(
     service: String,
     account_id: Uuid,
 ) -> Result<AccessToken, Oauth2Error> {
-    Ok(generate_access_token(redis_pool, service, account_id).await?)
+    generate_access_token(redis_pool, service, account_id).await
 }
 
 async fn generate_access_token(
