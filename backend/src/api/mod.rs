@@ -3,4 +3,5 @@ pub mod core;
 pub mod external;
 pub mod frontend;
 pub mod oauth;
+pub mod openid;
 pub mod response;

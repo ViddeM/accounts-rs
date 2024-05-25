@@ -13,6 +13,7 @@ use api::core::core_routes;
 use api::external::external_routes;
 use api::frontend::site_routes;
 use api::oauth::oauth_routes;
+use api::openid::openid_routes;
 use api::response::{ErrMsg, ResponseStatus};
 use rocket::http::Status;
 use rocket::response::Responder;
@@ -85,6 +86,7 @@ async fn rocket() -> _ {
         .mount("/api/core", core_routes())
         .mount("/api/site", site_routes())
         .mount("/api/oauth", oauth_routes())
+        .mount("/api/openid", openid_routes())
         .mount("/api/external", external_routes())
         .mount("/api/public", FileServer::from("static/public"))
         .register("/", catchers![unauthorized, forbidden])
