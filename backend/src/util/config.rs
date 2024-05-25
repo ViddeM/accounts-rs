@@ -57,7 +57,7 @@ impl Config {
             .expect("Failed to setup argon2 parameters"),
         );
 
-        let pepper = load_env_str(String::from("PEPPER"))?;
+        let pepper = load_env_str("PEPPER")?;
         if pepper.len() != REQUIRED_PEPPER_BYTES {
             panic!("Pepper must be exactly {} bytes", REQUIRED_PEPPER_BYTES);
         }
@@ -65,35 +65,35 @@ impl Config {
         let pepper_cipher = Aes256Gcm::new(pepper_key);
 
         // Load service account file
-        let service_account_file = load_env_str(String::from("SERVICE_ACCOUNT_FILE"))?;
+        let service_account_file = load_env_str("SERVICE_ACCOUNT_FILE")?;
         let file_contents = fs::read_to_string(service_account_file)?;
         let service_account: ServiceAccount = serde_json::from_str(&file_contents)?;
 
         Ok(Config {
-            database_url: load_env_str(String::from("DATABASE_URL"))?,
+            database_url: load_env_str("DATABASE_URL")?,
             pepper_cipher,
             argon2,
             service_account,
-            send_from_email_address: load_env_str(String::from("SEND_FROM_EMAIL_ADDRESS"))?,
-            backend_address: load_env_str(String::from("BACKEND_ADDRESS"))?,
-            offline_mode: load_env_bool(String::from("OFFLINE_MODE"))?,
-            redis_url: load_env_str(String::from("REDIS_URL"))?,
-            log_db_statements: load_env_bool(String::from("LOG_DB_STATEMENTS"))?,
+            send_from_email_address: load_env_str("SEND_FROM_EMAIL_ADDRESS")?,
+            backend_address: load_env_str("BACKEND_ADDRESS")?,
+            offline_mode: load_env_bool("OFFLINE_MODE")?,
+            redis_url: load_env_str("REDIS_URL")?,
+            log_db_statements: load_env_bool("LOG_DB_STATEMENTS")?,
         })
     }
 }
 
-fn load_env_str(key: String) -> ConfigResult<String> {
+fn load_env_str(key: &str) -> ConfigResult<String> {
     let var = env::var(&key)?;
 
     if var.is_empty() {
-        return Err(ConfigError::VarEmpty(key));
+        return Err(ConfigError::VarEmpty(key.to_string()));
     }
 
     Ok(var)
 }
 
-fn load_env_bool(key: String) -> ConfigResult<bool> {
+fn load_env_bool(key: &str) -> ConfigResult<bool> {
     let var = load_env_str(key)?;
     match var.as_str() {
         "false" => Ok(false),
