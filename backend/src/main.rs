@@ -15,6 +15,7 @@ use api::frontend::site_routes;
 use api::oauth::oauth_routes;
 use api::openid::openid_routes;
 use api::response::{ErrMsg, ResponseStatus};
+use eyre::{eyre, WrapErr};
 use rocket::http::Status;
 use rocket::response::Responder;
 use rocket::{fs::FileServer, Request};
@@ -38,14 +39,18 @@ use mobc_redis::RedisConnectionManager;
 
 const MAX_REDIS_CONNECTIONS: u64 = 20;
 
-#[launch]
-async fn rocket() -> _ {
+#[rocket::main]
+async fn main() -> eyre::Result<()> {
+    color_eyre::install()?;
+
     // Load
-    let config = Config::new().expect("Failed to load config");
+    let config = Config::new().wrap_err("Failed to load config")?;
 
     // Setup DB
-    let mut pg_options =
-        PgConnectOptions::from_str(&config.database_url).expect("Invalid database url provided");
+    let mut pg_options = PgConnectOptions::from_str(&config.database_url).wrap_err(eyre!(
+        "Invalid database url provided {:?}",
+        config.database_url
+    ))?;
 
     if !config.log_db_statements {
         pg_options = pg_options.disable_statement_logging();
@@ -55,18 +60,22 @@ async fn rocket() -> _ {
         .max_connections(5)
         .connect_with(pg_options)
         .await
-        .expect("Failed to connect to DB");
+        .wrap_err("Failed to connect to DB")?;
 
     sqlx::migrate!("./migrations")
         .run(&db_pool)
         .await
-        .expect("Failed to run migrations");
+        .wrap_err("Failed to run migrations")?;
 
-    db::init(&db_pool).await.expect("Failed to initialize db");
+    db::init(&db_pool)
+        .await
+        .wrap_err("Failed to initialize db")?;
 
     // Setup Redis cache
-    let redis_client = redis::Client::open(config.redis_url.clone())
-        .unwrap_or_else(|_| panic!("Failed to connect to redis on URL {}", config.redis_url));
+    let redis_client = redis::Client::open(config.redis_url.clone()).wrap_err(eyre!(
+        "Failed to connect to redis on URL {:?}",
+        config.redis_url
+    ))?;
     let redis_manager = RedisConnectionManager::new(redis_client);
     let redis_pool = Pool::builder()
         .max_open(MAX_REDIS_CONNECTIONS)
@@ -76,13 +85,13 @@ async fn rocket() -> _ {
     redis_pool
         .get()
         .await
-        .expect("Test connection to redis pool failed");
+        .wrap_err("Test connection to redis pool failed")?;
 
     // Setup background tasks
     let pool_clone = db_pool.clone();
     task::spawn(background_task::run_background_tasks(pool_clone));
 
-    rocket::build()
+    let rocket = rocket::build()
         .mount("/api/core", core_routes())
         .mount("/api/site", site_routes())
         .mount("/api/oauth", oauth_routes())
@@ -93,7 +102,11 @@ async fn rocket() -> _ {
         .manage(db_pool.clone())
         .manage(redis_pool)
         .manage(config)
-        .attach(Template::fairing())
+        .attach(Template::fairing());
+
+    rocket.launch().await?;
+
+    Ok(())
 }
 
 struct UnauthorizedResponse(ResponseStatus<()>);
