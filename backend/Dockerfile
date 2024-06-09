@@ -48,7 +48,6 @@ WORKDIR /
 ENV PORT=8080
 EXPOSE 8080
 
-COPY migrations ./
 COPY --from=build /app/target/x86_64-unknown-linux-musl/release/accounts_rs ./accounts_rs
 COPY --from=build /app/static ./static
 COPY --from=build /app/templates ./templates
