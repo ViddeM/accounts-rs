@@ -30,7 +30,7 @@ services:
       host.docker.internal: host-gateway
 
   db:
-    image: postgres:13.2
+    image: postgres:16
     environment:
       POSTGRES_DB: ${PG_DATABASE}
       POSTGRES_USER: ${PG_USERNAME}
@@ -47,7 +47,6 @@ services:
     image: redis:6.2
     ports:
       - ${REDIS_PORT}:6379
-
 
   redis-ui:
     image: patrikx3/p3x-redis-ui:2024.4.104
