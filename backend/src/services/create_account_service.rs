@@ -141,7 +141,7 @@ fn format_email_content(
     activation_code: &ActivationCode,
 ) -> String {
     let activate_account_uri = format!(
-        "{}/core{}",
+        "{}/api/core{}",
         config.backend_address,
         uri!(get_activate_account(
             Some(unactivated_account.email.clone()),
