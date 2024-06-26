@@ -2,6 +2,7 @@ use aes_gcm::{Aes256Gcm, Key, KeyInit};
 use argon2::{Algorithm, Argon2, Params, Version};
 use serde::{Deserialize, Serialize};
 use std::env::VarError;
+use std::sync::Arc;
 use std::{env, fs, io};
 
 #[derive(Debug, thiserror::Error)]
@@ -16,6 +17,8 @@ pub enum ConfigError {
     IOError(#[from] io::Error),
     #[error("Invalid bool `{0}`")]
     InvalidBool(String),
+    #[error("Invalid email provider `{0}`. Valid options are: none, stdout, google")]
+    InvalidEmailProvider(String),
 }
 
 pub type ConfigResult<T> = Result<T, ConfigError>;
@@ -32,12 +35,28 @@ pub struct Config {
     pub database_url: String,
     pub pepper_cipher: Aes256Gcm,
     pub argon2: Argon2<'static>,
-    pub service_account: ServiceAccount,
-    pub send_from_email_address: String,
+    pub email: EmailConfig,
     pub backend_address: String,
-    pub offline_mode: bool,
     pub redis_url: String,
     pub log_db_statements: bool,
+}
+
+#[derive(Clone)]
+pub enum EmailConfig {
+    /// No emails are sent.
+    None,
+
+    /// Emails that would be sent are instead logged.
+    Stdout,
+
+    /// Emails are sent using Google as an email provider.
+    Google(Arc<GoogleEmailConfig>),
+}
+
+#[derive(Clone)]
+pub struct GoogleEmailConfig {
+    pub send_from_email_address: String,
+    pub service_account: GoogleServiceAccount,
 }
 
 impl Config {
@@ -63,19 +82,29 @@ impl Config {
         let pepper_key: &Key<Aes256Gcm> = pepper.as_bytes().into();
         let pepper_cipher = Aes256Gcm::new(pepper_key);
 
-        // Load service account file
-        let service_account_file = load_env_str("SERVICE_ACCOUNT_FILE")?;
-        let file_contents = fs::read_to_string(service_account_file)?;
-        let service_account: ServiceAccount = serde_json::from_str(&file_contents)?;
+        let email_provider = load_env_str("EMAIL_PROVIDER")?;
+        let email = match email_provider.as_str() {
+            "none" => EmailConfig::None,
+            "stdout" => EmailConfig::Stdout,
+            "google" => {
+                let send_from_email_address = load_env_str("SEND_FROM_EMAIL_ADDRESS")?;
+                let service_account_file = load_env_str("SERVICE_ACCOUNT_FILE")?;
+                let file_contents = fs::read_to_string(service_account_file)?;
+                let service_account: GoogleServiceAccount = serde_json::from_str(&file_contents)?;
+                EmailConfig::Google(Arc::new(GoogleEmailConfig {
+                    send_from_email_address,
+                    service_account,
+                }))
+            }
+            _ => return Err(ConfigError::InvalidEmailProvider(email_provider)),
+        };
 
         Ok(Config {
             database_url: load_env_str("DATABASE_URL")?,
             pepper_cipher,
             argon2,
-            service_account,
-            send_from_email_address: load_env_str("SEND_FROM_EMAIL_ADDRESS")?,
+            email,
             backend_address: load_env_str("BACKEND_ADDRESS")?,
-            offline_mode: load_env_bool("OFFLINE_MODE")?,
             redis_url: load_env_str("REDIS_URL")?,
             log_db_statements: load_env_bool("LOG_DB_STATEMENTS")?,
         })
@@ -102,7 +131,7 @@ fn load_env_bool(key: &str) -> ConfigResult<bool> {
 }
 
 #[derive(Serialize, Deserialize, Clone)]
-pub struct ServiceAccount {
+pub struct GoogleServiceAccount {
     #[serde(rename = "type")]
     pub account_type: String,
     pub project_id: String,

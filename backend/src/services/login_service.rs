@@ -1,5 +1,4 @@
 use chrono::{DateTime, Duration, Utc};
-use rocket::State;
 use sqlx::Pool;
 
 use crate::{
@@ -34,8 +33,8 @@ impl From<sqlx::Error> for LoginError {
 }
 
 pub async fn validate_login(
-    config: &State<Config>,
-    db_pool: &State<Pool<DB>>,
+    config: &Config,
+    db_pool: &Pool<DB>,
     email: String,
     password: String,
 ) -> Result<LoginDetails, LoginError> {

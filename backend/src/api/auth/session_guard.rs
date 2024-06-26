@@ -153,7 +153,7 @@ impl<'r> FromRequest<'r> for Session {
 }
 
 pub async fn set_session(
-    redis_pool: &State<mobc::Pool<RedisConnectionManager>>,
+    redis_pool: &mobc::Pool<RedisConnectionManager>,
     login_details: &LoginDetails,
     cookies: &CookieJar<'_>,
 ) -> Result<(), SessionError> {
@@ -210,7 +210,7 @@ pub async fn delete_session_cookie<'r>(cookie_jar: &CookieJar<'r>) {
 }
 
 pub async fn reset_account_sessions(
-    redis_pool: &State<Pool<RedisConnectionManager>>,
+    redis_pool: &Pool<RedisConnectionManager>,
     account_id: Uuid,
 ) -> Result<(), SessionError> {
     let mut redis_conn = redis_pool.get().await.map_err(|err| {

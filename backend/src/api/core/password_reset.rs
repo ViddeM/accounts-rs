@@ -8,7 +8,10 @@ use sqlx::Pool;
 
 use crate::{
     db::DB,
-    services::reset_password_service::{self, ResetPasswordError},
+    services::{
+        email_service::EmailProvider,
+        reset_password_service::{self, ResetPasswordError},
+    },
     util::config::Config,
 };
 
@@ -43,12 +46,12 @@ pub struct ForgotPasswordForm {
 
 #[post("/forgot_password", data = "<forgot_password>")]
 pub async fn post_forgot_password(
-    config: &State<Config>,
+    email_provider: &State<EmailProvider>,
     db_pool: &State<Pool<DB>>,
     forgot_password: Form<ForgotPasswordForm>,
 ) -> Either<Template, Redirect> {
     if let Err(e) = reset_password_service::initiate_password_reset(
-        config,
+        email_provider,
         db_pool,
         forgot_password.email.clone(),
     )

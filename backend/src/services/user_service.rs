@@ -1,4 +1,3 @@
-use rocket::State;
 use sqlx::Pool;
 use uuid::Uuid;
 
@@ -20,7 +19,7 @@ pub enum UserError {
 
 pub async fn get_me(
     account_id: Uuid,
-    db_pool: &State<Pool<DB>>,
+    db_pool: &Pool<DB>,
 ) -> Result<(Account, Option<LoginDetails>), UserError> {
     let mut transaction = new_transaction(db_pool).await?;
 

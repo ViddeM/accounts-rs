@@ -224,6 +224,7 @@ impl<'r> FromRequest<'r> for AuthHeader {
 
 // For docker flow
 #[get("/token?<service>&<offline_token>&<client_id>&<scope>")]
+#[allow(clippy::too_many_arguments)]
 pub async fn get_access_token(
     db_pool: &State<sqlx::Pool<DB>>,
     redis_pool: &State<mobc::Pool<RedisConnectionManager>>,

@@ -1,4 +1,3 @@
-use rocket::State;
 use sqlx::Pool;
 
 use crate::{
@@ -25,7 +24,7 @@ impl From<AccountsError> for UsersError {
     }
 }
 
-pub async fn get_all_users(db_pool: &State<Pool<DB>>) -> Result<Vec<Account>, UsersError> {
+pub async fn get_all_users(db_pool: &Pool<DB>) -> Result<Vec<Account>, UsersError> {
     let mut transaction = new_transaction(db_pool).await?;
 
     let accs = account_repository::get_all_accounts(&mut transaction)

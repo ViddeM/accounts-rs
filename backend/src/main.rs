@@ -20,6 +20,7 @@ use rocket::http::Status;
 use rocket::response::Responder;
 use rocket::{fs::FileServer, Request};
 use rocket_dyn_templates::Template;
+use services::email_service::EmailProvider;
 use sqlx::postgres::{PgConnectOptions, PgPoolOptions};
 use sqlx::ConnectOptions;
 use tokio::task;
@@ -91,6 +92,8 @@ async fn main() -> eyre::Result<()> {
     let pool_clone = db_pool.clone();
     task::spawn(background_task::run_background_tasks(pool_clone));
 
+    let email_provider = EmailProvider::from(&config.email);
+
     let rocket = rocket::build()
         .mount("/api/core", core_routes())
         .mount("/api/site", site_routes())
@@ -102,6 +105,7 @@ async fn main() -> eyre::Result<()> {
         .manage(db_pool.clone())
         .manage(redis_pool)
         .manage(config)
+        .manage(email_provider)
         .attach(Template::fairing());
 
     rocket.launch().await?;

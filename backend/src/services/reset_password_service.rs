@@ -1,6 +1,5 @@
 use chrono::Utc;
 use mobc_redis::RedisConnectionManager;
-use rocket::State;
 use sqlx::types::uuid::Uuid;
 use sqlx::Pool;
 
@@ -8,9 +7,11 @@ use crate::{
     api::auth::session_guard,
     db::{login_details_repository, new_transaction, reset_password_repository, DB},
     models::password_reset::PasswordReset,
-    services::{email_service, email_service::EmailError, password_service},
+    services::{email_service::EmailError, password_service},
     util::{accounts_error::AccountsError, config::Config, uuid::uuid_from_sqlx},
 };
+
+use super::email_service::EmailProvider;
 
 #[derive(Debug, thiserror::Error)]
 pub enum ResetPasswordError {
@@ -40,8 +41,8 @@ impl From<sqlx::Error> for ResetPasswordError {
 const RESET_PASSWORD_COOLDOWN_SECONDS: i64 = 60;
 
 pub async fn initiate_password_reset(
-    config: &State<Config>,
-    db_pool: &State<Pool<DB>>,
+    email_provider: &EmailProvider,
+    db_pool: &Pool<DB>,
     email: String,
 ) -> Result<(), ResetPasswordError> {
     let mut transaction = new_transaction(db_pool).await?;
@@ -102,13 +103,13 @@ pub async fn initiate_password_reset(
 
     let email_content = format_reset_password_email_content(&reset_password);
 
-    email_service::send_email(
-        &account.email,
-        "Password reset request for your accounts-rs account",
-        &email_content,
-        config,
-    )
-    .await?;
+    email_provider
+        .send_email(
+            &account.email,
+            "Password reset request for your accounts-rs account",
+            &email_content,
+        )
+        .await?;
 
     transaction.commit().await?;
 
@@ -133,9 +134,9 @@ If you did not request this password reset you can safely ignore this email.
 }
 
 pub async fn update_password(
-    config: &State<Config>,
-    db_pool: &State<Pool<DB>>,
-    redis_pool: &State<mobc::Pool<RedisConnectionManager>>,
+    config: &Config,
+    db_pool: &Pool<DB>,
+    redis_pool: &mobc::Pool<RedisConnectionManager>,
     email: String,
     code: Uuid,
     password: String,

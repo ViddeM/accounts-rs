@@ -1,4 +1,4 @@
-use crate::services::create_account_service;
+use crate::services::{create_account_service, email_service::EmailProvider};
 use crate::util::config::Config;
 use rocket::form::Form;
 
@@ -49,6 +49,7 @@ pub struct CreateAccountForm {
 #[post("/create_account", data = "<create_account>")]
 pub async fn create_account(
     config: &State<Config>,
+    email_provider: &State<EmailProvider>,
     db_pool: &State<Pool<DB>>,
     create_account: Form<CreateAccountForm>,
 ) -> Template {
@@ -66,6 +67,7 @@ pub async fn create_account(
 
     if let Err(e) = create_account_service::create_account(
         config,
+        email_provider,
         db_pool,
         create_account.first_name.to_owned(),
         create_account.last_name.to_owned(),

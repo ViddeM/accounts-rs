@@ -1,6 +1,6 @@
 use mobc::Pool;
 use mobc_redis::{redis::AsyncCommands, RedisConnectionManager};
-use rocket::{serde::DeserializeOwned, State};
+use rocket::serde::DeserializeOwned;
 use serde::Serialize;
 
 #[derive(Debug, thiserror::Error)]
@@ -14,7 +14,7 @@ pub enum RedisError {
 }
 
 pub async fn redis_get<T>(
-    redis_pool: &State<Pool<RedisConnectionManager>>,
+    redis_pool: &Pool<RedisConnectionManager>,
     key: String,
 ) -> Result<T, RedisError>
 where
@@ -37,7 +37,7 @@ where
 }
 
 pub async fn redis_get_option<T>(
-    redis_pool: &State<Pool<RedisConnectionManager>>,
+    redis_pool: &Pool<RedisConnectionManager>,
     key: String,
 ) -> Result<Option<T>, RedisError>
 where
@@ -64,7 +64,7 @@ where
 }
 
 pub async fn redis_set<T>(
-    redis_pool: &State<Pool<RedisConnectionManager>>,
+    redis_pool: &Pool<RedisConnectionManager>,
     key: String,
     val: T,
     expiration_seconds: usize,
@@ -96,7 +96,7 @@ where
 }
 
 pub async fn redis_push(
-    redis_pool: &State<Pool<RedisConnectionManager>>,
+    redis_pool: &Pool<RedisConnectionManager>,
     key: String,
     value: String,
 ) -> Result<(), RedisError> {
@@ -117,7 +117,7 @@ pub async fn redis_push(
 }
 
 pub async fn redis_del(
-    redis_pool: &State<Pool<RedisConnectionManager>>,
+    redis_pool: &Pool<RedisConnectionManager>,
     key: String,
 ) -> Result<(), RedisError> {
     let mut redis_conn = redis_pool.get().await.map_err(|err| {

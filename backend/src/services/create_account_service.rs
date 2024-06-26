@@ -5,11 +5,12 @@ use crate::db::{new_transaction, DB};
 use crate::models::activation_code::ActivationCode;
 use crate::models::login_details::LoginDetails;
 use crate::services::email_service::EmailError;
-use crate::services::{email_service, password_service};
+use crate::services::password_service;
 use crate::util::accounts_error::AccountsError;
 use crate::util::config::Config;
-use rocket::State;
 use sqlx::Pool;
+
+use super::email_service::EmailProvider;
 
 #[derive(Debug, thiserror::Error)]
 pub enum CreateAccountError {
@@ -36,8 +37,9 @@ impl From<sqlx::Error> for CreateAccountError {
 }
 
 pub async fn create_account(
-    config: &State<Config>,
-    db_pool: &State<Pool<DB>>,
+    config: &Config,
+    email_provider: &EmailProvider,
+    db_pool: &Pool<DB>,
     first_name: String,
     last_name: String,
     email: String,
@@ -118,14 +120,14 @@ pub async fn create_account(
     let email_content = format_email_content(config, &unactivated_account, &activation_code);
 
     // Send email to the email address for confirmation
-    if let Err(e) = email_service::send_email(
-        &unactivated_account.email,
-        "Activate your accounts-rs account",
-        // TODO: Make the activation time configurable so that it is correct.
-        &email_content,
-        config,
-    )
-    .await
+    if let Err(e) = email_provider
+        .send_email(
+            &unactivated_account.email,
+            "Activate your accounts-rs account",
+            // TODO: Make the activation time configurable so that it is correct.
+            &email_content,
+        )
+        .await
     {
         error!("Failed to send email, err: {}", e);
         return Err(CreateAccountError::Internal);

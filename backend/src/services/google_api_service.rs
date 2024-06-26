@@ -1,4 +1,4 @@
-use crate::util::config::Config;
+use crate::util::config::GoogleEmailConfig;
 use base64::engine::general_purpose::STANDARD;
 use base64::Engine;
 use chrono::{Duration, Utc};
@@ -40,7 +40,7 @@ const GMAIL_SEND_EMAIL_SCOPE: &str = "https://www.googleapis.com/auth/gmail.send
 
 const GOOGLE_AUD_VALUE: &str = "https://oauth2.googleapis.com/token";
 
-fn create_jwt(config: &Config) -> Result<String, GoogleApiError> {
+fn create_jwt(config: &GoogleEmailConfig) -> Result<String, GoogleApiError> {
     let private_key = PKey::private_key_from_pem(config.service_account.private_key.as_bytes())?;
     let key_with_digest = PKeyWithDigest {
         digest: MessageDigest::sha256(),
@@ -72,7 +72,7 @@ struct GoogleAuthResponse {
     token_type: String,
 }
 
-pub async fn retrieve_token(config: &Config) -> Result<String, GoogleApiError> {
+pub async fn retrieve_token(config: &GoogleEmailConfig) -> Result<String, GoogleApiError> {
     let jwt = create_jwt(config)?;
 
     let client = reqwest::Client::new();
@@ -129,7 +129,7 @@ pub async fn send_email(
     subject: &str,
     content: &str,
     token: &str,
-    config: &Config,
+    config: &GoogleEmailConfig,
 ) -> Result<(), GoogleApiError> {
     let send_email_request = GoogleSendEmailRequest::new(
         &config.send_from_email_address,
