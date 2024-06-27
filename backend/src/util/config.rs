@@ -1,6 +1,5 @@
 use aes_gcm::{Aes256Gcm, Key, KeyInit};
 use argon2::{Algorithm, Argon2, Params, Version};
-use dotenvy;
 use serde::{Deserialize, Serialize};
 use std::env::VarError;
 use std::{env, fs, io};

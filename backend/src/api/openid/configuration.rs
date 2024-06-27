@@ -1,6 +1,8 @@
 use rocket::serde::json::Json;
+use rocket::State;
+use serde::{Deserialize, Serialize};
 
-use crate::util::config::{self, Config};
+use crate::util::config::Config;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OpenIdConfiguration {
@@ -24,12 +26,12 @@ pub enum OpenIdConfigurationResponse {
 
 #[get("/.well-known/openid-configuration")]
 pub async fn get_openid_configuration(config: &State<Config>) -> OpenIdConfigurationResponse {
-    Ok(Json(OpenIdConfiguration {
-        issuer: config.backend_address,
-        authorization_endpoint: format!("{}/api/oauth/authorize"),
-        token_endpoint: format!("{}/api/oauth/token"),
-        userinfo_endpoint: format!("{}/api/openid/userinfo"),
-        jwks_uri: default(),      // TODO: Not implemented
+    OpenIdConfigurationResponse::Success(Json(OpenIdConfiguration {
+        issuer: config.backend_address.clone(),
+        authorization_endpoint: format!("{}/api/oauth/authorize", config.backend_address),
+        token_endpoint: format!("{}/api/oauth/token", config.backend_address),
+        userinfo_endpoint: format!("{}/api/openid/userinfo", config.backend_address),
+        jwks_uri: Default::default(), // TODO: Not implemented
         scopes_supported: vec![], // TODO: We should probably support scopes, at least openid (as it is required by the spec).
         response_types_supported: vec!["code".to_string()],
         grant_types_supported: vec!["authorization_code".to_string()],

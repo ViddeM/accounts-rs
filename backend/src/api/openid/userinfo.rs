@@ -3,10 +3,7 @@ use serde::Serialize;
 use sqlx::Pool;
 
 use crate::{
-    api::{
-        auth::access_token_guard::AccessTokenAuth,
-        external::user::{self, UserInfoResponse},
-    },
+    api::auth::access_token_guard::AccessTokenAuth,
     db::DB,
     services::user_info_service::{self, UserInfoError},
 };
