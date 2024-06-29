@@ -1,0 +1,63 @@
+<html lang="en">
+
+  <head>
+    <title>Consent</title>
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="/api/public/styles.css"
+      media="screen"
+    />
+  </head>
+
+  <body>
+    <form
+      class="card form"
+      id="client-consent-form"
+      method="POST"
+      action="/api/oauth/consent"
+    >
+      <h1>
+        Consent to
+        {{client_name}}
+      </h1>
+      <p>The app
+        {{client_name}}
+        is asking you to consent to providing the following information:</p>
+      <ul>
+        {{#each scope_fields}}
+          <li>{{scope}}</li>
+          <ul>
+            {{#each fields}}
+              <li>{{this}}</li>
+            {{/each}}
+          </ul>
+        {{/each}}
+      </ul>
+      <input type="hidden" name="scopes" value={{scope}} id="scope" />
+      <input
+        type="hidden"
+        name="client_id"
+        value="{{client_id}}"
+        id="client_id"
+      />
+      <input type="hidden" name="state" value="{{state}}" id="state" />
+      <input
+        type="hidden"
+        name="response_type"
+        value="{{response_type}}"
+        id="response_type"
+      />
+      <input type="hidden" name="redirect_uri" value="{{redirect_uri}}" />
+      <div class="form-row">
+        <button type="submit" name="deny">
+          Deny
+        </button>
+        <button type="submit" name="accept">
+          Consent
+        </button>
+      </div>
+    </form>
+  </body>
+
+</html>

@@ -7,7 +7,7 @@ use crate::{
     util::{accounts_error::AccountsError, uuid::uuid_to_sqlx},
 };
 
-use super::{oauth2_authorization_service::AccessToken, redis_service::RedisError};
+use super::{oauth_authorization_service::AccessToken, redis_service::RedisError};
 
 #[derive(Debug, thiserror::Error)]
 pub enum UserInfoError {

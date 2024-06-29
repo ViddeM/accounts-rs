@@ -5,7 +5,7 @@ use rocket::{
     State,
 };
 
-use crate::services::oauth2_authorization_service::{AccessToken, ACCESS_TOKEN_KEY_REDIS_PREFIX};
+use crate::services::oauth_authorization_service::{AccessToken, ACCESS_TOKEN_KEY_REDIS_PREFIX};
 use crate::{api::oauth::access_token::TOKEN_TYPE_BEARER, services::redis_service};
 
 #[derive(Debug)]
