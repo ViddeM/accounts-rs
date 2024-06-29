@@ -77,6 +77,7 @@ pub enum ErrMsg {
     InvalidResponseType,
     InvalidRedirectUri,
     InvalidAccessToken,
+    InvalidScope,
 }
 
 impl Display for ErrMsg {

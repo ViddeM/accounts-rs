@@ -17,7 +17,7 @@ use crate::{
     db::DB,
     services::{
         login_service,
-        oauth2_authorization_service::{self, AccessToken, Oauth2Error},
+        oauth_authorization_service::{self, AccessToken, Oauth2Error},
     },
     util::config::Config,
 };
@@ -72,7 +72,7 @@ pub async fn post_access_token(
         );
     }
 
-    let access_token = match oauth2_authorization_service::get_access_token(
+    let access_token = match oauth_authorization_service::get_access_token(
         db_pool,
         redis_pool,
         request.client_id.clone(),
@@ -259,7 +259,7 @@ pub async fn get_access_token(
         }
     };
 
-    let access_token = match oauth2_authorization_service::get_access_token_basic_auth(
+    let access_token = match oauth_authorization_service::get_access_token_basic_auth(
         redis_pool,
         service,
         login_details.account_id,

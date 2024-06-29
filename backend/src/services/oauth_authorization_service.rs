@@ -1,13 +1,18 @@
+use std::collections::HashSet;
+
 use chrono::{DateTime, Duration, Utc};
 use mobc_redis::RedisConnectionManager;
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
-use rocket::State;
 use serde::{Deserialize, Serialize};
 use sqlx::Pool;
 use uuid::Uuid;
 
 use crate::{
-    db::{new_transaction, oauth_client_repository, DB},
+    db::{
+        client_scope_repository, new_transaction, oauth_client_repository,
+        user_client_consent_repository, DB,
+    },
+    models::{client_scope::ClientScope, oauth_scope::OauthScope},
     util::accounts_error::AccountsError,
 };
 
@@ -35,6 +40,10 @@ pub enum Oauth2Error {
     RedisError(#[from] RedisError),
     #[error("Failed to insert access token into the redis cache")]
     CacheInsertion,
+    #[error("The user has not consented to this client or has consented to the client but not all of the requested scopes")]
+    MissingClientConsent { client_name: String },
+    #[error("Invalid scope")]
+    InvalidScope,
 }
 
 const AUTH_TOKEN_LENGTH: usize = 48;
@@ -56,12 +65,13 @@ struct AuthToken {
 }
 
 pub async fn get_auth_token(
-    db_pool: &State<Pool<DB>>,
-    redis_pool: &State<mobc::Pool<RedisConnectionManager>>,
+    db_pool: &Pool<DB>,
+    redis_pool: &mobc::Pool<RedisConnectionManager>,
     client_id: String,
-    redirect_uri: String,
-    state: String,
+    redirect_uri: &String,
+    state: &String,
     account_id: Uuid,
+    requested_scopes: &HashSet<OauthScope>,
 ) -> Result<String, Oauth2Error> {
     let mut transaction = new_transaction(db_pool).await?;
 
@@ -69,7 +79,7 @@ pub async fn get_auth_token(
         .await?
         .ok_or(Oauth2Error::NoClientWithId)?;
 
-    if redirect_uri != client.redirect_uri {
+    if redirect_uri != &client.redirect_uri {
         error!(
             "Redirect uri doesn't match, request redirect_uri: {}, client set redirect_uri: {}",
             redirect_uri, client.redirect_uri
@@ -77,6 +87,33 @@ pub async fn get_auth_token(
         return Err(Oauth2Error::InvalidRedirectUri);
     }
 
+    let Some(user_client_consent) = user_client_consent_repository::get_by_client_and_account(
+        &mut transaction,
+        &client,
+        &account_id,
+    )
+    .await?
+    else {
+        return Err(Oauth2Error::MissingClientConsent {
+            client_name: client.client_name,
+        });
+    };
+
+    let consented_scopes = client_scope_repository::consented_by_user_for_client(
+        &mut transaction,
+        &client,
+        &user_client_consent,
+    )
+    .await?;
+
+    if !validate_scopes(&requested_scopes, &consented_scopes) {
+        warn!("The user has consented to this client but not all of the requested scopes, asking if they would consider it");
+        return Err(Oauth2Error::MissingClientConsent {
+            client_name: client.client_name,
+        });
+    }
+
+    // We accept the request, now we generate and return a token.
     let code: String = thread_rng()
         .sample_iter(&Alphanumeric)
         .take(AUTH_TOKEN_LENGTH)
@@ -115,8 +152,8 @@ pub struct AccessToken {
 }
 
 pub async fn get_access_token(
-    db_pool: &State<Pool<DB>>,
-    redis_pool: &State<mobc::Pool<RedisConnectionManager>>,
+    db_pool: &Pool<DB>,
+    redis_pool: &mobc::Pool<RedisConnectionManager>,
     client_id: String,
     client_secret: String,
     redirect_uri: String,
@@ -174,7 +211,7 @@ pub async fn get_access_token(
 }
 
 pub async fn get_access_token_basic_auth(
-    redis_pool: &State<mobc::Pool<RedisConnectionManager>>,
+    redis_pool: &mobc::Pool<RedisConnectionManager>,
     service: String,
     account_id: Uuid,
 ) -> Result<AccessToken, Oauth2Error> {
@@ -182,7 +219,7 @@ pub async fn get_access_token_basic_auth(
 }
 
 async fn generate_access_token(
-    redis_pool: &State<mobc::Pool<RedisConnectionManager>>,
+    redis_pool: &mobc::Pool<RedisConnectionManager>,
     client_id: String,
     account_id: Uuid,
 ) -> Result<AccessToken, Oauth2Error> {
@@ -218,4 +255,17 @@ async fn generate_access_token(
     .or(Err(Oauth2Error::CacheInsertion))?;
 
     Ok(access_token)
+}
+
+pub fn validate_scopes(
+    requested_scopes: &HashSet<OauthScope>,
+    client_scopes: &Vec<ClientScope>,
+) -> bool {
+    let consented_scopes: Vec<&OauthScope> = client_scopes.iter().map(|s| &s.scope).collect();
+
+    requested_scopes
+        .iter()
+        .filter(|s| consented_scopes.contains(s))
+        .count()
+        == 0
 }
