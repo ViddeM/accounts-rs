@@ -5,3 +5,14 @@
   width: 100%;
   max-width: 300px;
 }
+
+.scopesContainer {
+  margin-top: $space;
+  max-width: 300px;
+  width: 100%;
+  border-radius: $border-radius;
+}
+
+.scopesList {
+  list-style: none;
+}

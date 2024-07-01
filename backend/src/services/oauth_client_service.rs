@@ -3,8 +3,8 @@ use rocket::State;
 use sqlx::types::Uuid;
 
 use crate::{
-    db::{new_transaction, oauth_client_repository, DB},
-    models::oauth_client::OauthClient,
+    db::{client_scope_repository, new_transaction, oauth_client_repository, DB},
+    models::{oauth_client::OauthClient, oauth_scope::OauthScope},
     util::accounts_error::AccountsError,
 };
 
@@ -51,8 +51,9 @@ pub async fn get_oauth_clients(
 
 pub async fn create_oauth_client(
     db_pool: &State<sqlx::Pool<DB>>,
-    client_name: String,
-    redirect_uri: String,
+    client_name: &String,
+    redirect_uri: &String,
+    scopes: &Vec<OauthScope>,
 ) -> Result<OauthClient, OauthClientError> {
     let mut transaction = new_transaction(db_pool).await?;
 
@@ -80,12 +81,16 @@ pub async fn create_oauth_client(
 
     let oauth_client = oauth_client_repository::insert(
         &mut transaction,
-        client_id,
-        client_secret,
+        &client_id,
+        &client_secret,
         client_name,
         redirect_uri,
     )
     .await?;
+
+    for scope in scopes.into_iter() {
+        client_scope_repository::insert(&mut transaction, &oauth_client, scope).await?;
+    }
 
     transaction.commit().await?;
 

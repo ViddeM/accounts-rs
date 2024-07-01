@@ -15,13 +15,19 @@ const CreateClient = () => {
   const router = useRouter();
   const [clientName, setClientName] = useState("");
   const [redirectUri, setRedirectUri] = useState("");
+  const [emailScope, setEmailScope] = useState(false);
+  const [openidScope, setOpenidScope] = useState(false);
   const [error, setError] = useState<undefined | string>(undefined);
   const { openModal } = useModal();
+
+  const scopes = [emailScope ? "email" : null, openidScope ? "openid" : null]
+    .filter((s) => s !== null)
+    .map((s) => s!!);
 
   const onSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     Api.oauthClients
-      .create(clientName, redirectUri)
+      .create(clientName, redirectUri, scopes)
       .then((resp) => {
         openModal({
           title: "New Client info",
@@ -75,6 +81,38 @@ Client Secret: ${resp.data!!.clientSecret}`,
             }}
           />
         </div>
+
+        <fieldset className={styles.scopesContainer}>
+          <legend>
+            <h4>Scopes</h4>
+          </legend>
+          <ul className={styles.scopesList}>
+            <li>
+              <span>
+                <input
+                  id="email_scope"
+                  type="checkbox"
+                  checked={emailScope}
+                  onChange={() => {
+                    setEmailScope(!emailScope);
+                  }}
+                />
+                <label htmlFor="email_scope">Email</label>
+              </span>
+            </li>
+            <li>
+              <span>
+                <input
+                  id="openid_scope"
+                  type="checkbox"
+                  checked={openidScope}
+                  onChange={() => setOpenidScope(!openidScope)}
+                />
+                <label htmlFor="openid_scope">OpenID</label>
+              </span>
+            </li>
+          </ul>
+        </fieldset>
 
         {<p style={{ backgroundColor: "red" }}>{error}</p>}
 
