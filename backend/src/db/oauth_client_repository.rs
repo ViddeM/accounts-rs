@@ -6,10 +6,10 @@ use super::DB;
 
 pub async fn insert(
     transaction: &mut Transaction<'_, DB>,
-    client_id: String,
-    client_secret: String,
-    client_name: String,
-    redirect_uri: String,
+    client_id: &String,
+    client_secret: &String,
+    client_name: &String,
+    redirect_uri: &String,
 ) -> AccountsResult<OauthClient> {
     Ok(sqlx::query_as!(
         OauthClient,

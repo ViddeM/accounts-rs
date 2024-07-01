@@ -2,13 +2,32 @@ use sqlx::Transaction;
 
 use crate::{
     models::{
-        client_scope::ClientScope, oauth_client::OauthClient,
+        client_scope::ClientScope, oauth_client::OauthClient, oauth_scope::OauthScope,
         user_client_consent::UserClientConsent,
     },
     util::accounts_error::AccountsResult,
 };
 
 use super::DB;
+
+pub async fn insert(
+    transaction: &mut Transaction<'_, DB>,
+    client: &OauthClient,
+    scope: &OauthScope,
+) -> AccountsResult<ClientScope> {
+    Ok(sqlx::query_as!(
+        ClientScope,
+        r#"
+INSERT INTO client_scope (client_id, scope)
+VALUES                   ($1,        $2)
+RETURNING id, client_id, scope as "scope: _", created_at
+        "#,
+        client.id,
+        scope as &OauthScope
+    )
+    .fetch_one(&mut **transaction)
+    .await?)
+}
 
 pub async fn consented_by_user_for_client(
     transaction: &mut Transaction<'_, DB>,

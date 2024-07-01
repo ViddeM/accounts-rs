@@ -1,6 +1,6 @@
 use std::{collections::HashSet, fmt::Display};
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize)]
 pub struct ScopeField {
@@ -8,11 +8,13 @@ pub struct ScopeField {
     fields: Vec<String>,
 }
 
-#[derive(Debug, Clone, sqlx::Type, Serialize, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, sqlx::Type, Serialize, Deserialize, PartialEq, Eq, Hash)]
 #[sqlx(type_name = "OAUTH_SCOPE", rename_all = "snake_case")]
+#[serde(rename_all = "snake_case")]
 pub enum OauthScope {
     Email,
     #[sqlx(rename = "openid")]
+    #[serde(rename = "openid")]
     OpenId,
 }
 

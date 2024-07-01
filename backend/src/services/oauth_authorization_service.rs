@@ -99,6 +99,7 @@ pub async fn get_auth_token(
         });
     };
 
+    todo!("Fix bug allowing clients to request scopes they are not registered for, leading to an error later on.");
     let consented_scopes = client_scope_repository::consented_by_user_for_client(
         &mut transaction,
         &client,

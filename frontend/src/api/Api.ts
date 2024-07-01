@@ -69,11 +69,12 @@ export const Api = {
         cookie
       );
     },
-    create: (clientName: string, redirectUri: string) => {
+    create: (clientName: string, redirectUri: string, scopes: string[]) => {
       return handleResponse(
         axios.post<RawApiResponse<NewOAuthClient>>("/site/oauth_clients", {
           clientName: clientName,
           redirectUri: redirectUri,
+          scopes: scopes,
         })
       );
     },

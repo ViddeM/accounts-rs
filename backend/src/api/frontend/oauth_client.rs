@@ -7,6 +7,7 @@ use crate::{
         response::{EmptyResponse, ErrMsg, ResponseStatus},
     },
     db::DB,
+    models::oauth_scope::OauthScope,
     services::oauth_client_service::{self, OauthClientError},
 };
 
@@ -54,6 +55,7 @@ pub async fn get_oauth_clients(
 pub struct NewClientRequest {
     pub client_name: String,
     pub redirect_uri: String,
+    pub scopes: Vec<OauthScope>,
 }
 
 #[derive(Serialize, Clone)]
@@ -71,8 +73,9 @@ pub async fn post_new_client(
 ) -> ResponseStatus<NewClientResponse> {
     match oauth_client_service::create_oauth_client(
         db_pool,
-        request.client_name.to_owned(),
-        request.redirect_uri.to_owned(),
+        &request.client_name,
+        &request.redirect_uri,
+        &request.scopes,
     )
     .await
     {
