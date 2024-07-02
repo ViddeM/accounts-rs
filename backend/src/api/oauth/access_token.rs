@@ -231,6 +231,7 @@ pub async fn get_access_token(
     config: &State<Config>,
     auth_header: AuthHeader,
     service: String,
+    // TODO: Investigate what/how/if these should be used.
     offline_token: Option<bool>,
     client_id: Option<String>,
     scope: Option<String>,
