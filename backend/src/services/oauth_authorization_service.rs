@@ -44,6 +44,8 @@ pub enum Oauth2Error {
     MissingClientConsent { client_name: String },
     #[error("Invalid scope")]
     InvalidScope,
+    #[error("Requested scope is not registered for the client")]
+    ScopeNotRegistered,
 }
 
 const AUTH_TOKEN_LENGTH: usize = 48;
@@ -87,6 +89,15 @@ pub async fn get_auth_token(
         return Err(Oauth2Error::InvalidRedirectUri);
     }
 
+    // Ensure that the requested scopes are valid for this client.
+    let registered_scopes =
+        client_scope_repository::get_all_for_client(&mut transaction, &client).await?;
+    if !validate_scopes(&requested_scopes, &registered_scopes) {
+        error!("Client ({client_id:?}) requested scope they are not registered for, requested: {requested_scopes:?}");
+        return Err(Oauth2Error::ScopeNotRegistered);
+    }
+
+    // Check if the user has consented to this client and if not, ask if they would.
     let Some(user_client_consent) = user_client_consent_repository::get_by_client_and_account(
         &mut transaction,
         &client,
@@ -99,7 +110,6 @@ pub async fn get_auth_token(
         });
     };
 
-    todo!("Fix bug allowing clients to request scopes they are not registered for, leading to an error later on.");
     let consented_scopes = client_scope_repository::consented_by_user_for_client(
         &mut transaction,
         &client,
@@ -262,11 +272,9 @@ pub fn validate_scopes(
     requested_scopes: &HashSet<OauthScope>,
     client_scopes: &Vec<ClientScope>,
 ) -> bool {
-    let consented_scopes: Vec<&OauthScope> = client_scopes.iter().map(|s| &s.scope).collect();
+    let consented_scopes: HashSet<&OauthScope> = client_scopes.iter().map(|s| &s.scope).collect();
 
     requested_scopes
         .iter()
-        .filter(|s| consented_scopes.contains(s))
-        .count()
-        == 0
+        .all(|s| consented_scopes.contains(s))
 }

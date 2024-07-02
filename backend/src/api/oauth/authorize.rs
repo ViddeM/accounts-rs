@@ -105,6 +105,13 @@ pub async fn get_authorization(
     .await
     {
         Ok(url) => url,
+        Err(Oauth2Error::ScopeNotRegistered) => {
+            error!("The client was not registered for one or more of the requested scopes");
+            return GetAuthorizationResponse::Failure(ResponseStatus::err(
+                Status::BadRequest,
+                ErrMsg::InvalidScope,
+            ));
+        }
         Err(Oauth2Error::NoClientWithId) => {
             error!("No client with id '{}'", client_id);
             return GetAuthorizationResponse::Failure(ResponseStatus::err(
