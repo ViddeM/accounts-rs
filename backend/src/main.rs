@@ -13,7 +13,7 @@ use api::core::core_routes;
 use api::external::external_routes;
 use api::frontend::site_routes;
 use api::oauth::oauth_routes;
-use api::openid::openid_routes;
+use api::openid::{self, openid_routes};
 use api::response::{ErrMsg, ResponseStatus};
 use eyre::{eyre, WrapErr};
 use rocket::http::Status;
@@ -101,6 +101,10 @@ async fn main() -> eyre::Result<()> {
         .mount("/api/openid", openid_routes())
         .mount("/api/external", external_routes())
         .mount("/api/public", FileServer::from("static/public"))
+        .mount(
+            "/",
+            routes![openid::configuration::get_openid_configuration],
+        )
         .register("/", catchers![unauthorized, forbidden])
         .manage(db_pool.clone())
         .manage(redis_pool)
