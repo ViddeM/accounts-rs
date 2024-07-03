@@ -38,6 +38,7 @@ pub enum GetAuthorizationResponse {
     Success(Redirect),
 }
 
+// TODO: Perhaps support nonce.
 /// First step in the oauth2 authorization flow.
 #[get("/authorize?<response_type>&<client_id>&<redirect_uri>&<state>&<scope>")]
 pub async fn get_authorization(

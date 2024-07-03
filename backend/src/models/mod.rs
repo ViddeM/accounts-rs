@@ -3,6 +3,7 @@ pub mod activation_code;
 pub mod authority;
 pub mod authorization_code;
 pub mod client_scope;
+pub mod id_token;
 pub mod login_details;
 pub mod login_provider;
 pub mod oauth_client;

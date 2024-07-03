@@ -41,16 +41,22 @@ pub struct AccessTokenRequest {
     client_secret: String,
 }
 
+#[derive(Responder, Debug, Clone)]
+pub enum AccessTokenResponse {
+    #[response(status = 200)]
+    Success(Json<AccessTokenResponseData>),
+    #[response(status = 400)]
+    Error(Json<AccessTokenErrorResponse>),
+    #[response(status = 500)]
+    InternalError(String),
+}
+
 #[derive(Serialize, Clone, Debug)]
-pub struct AccessTokenSuccessResponse {
+pub struct AccessTokenResponseData {
     access_token: String,
     expires_in: u32,
     token_type: String,
-}
-
-pub enum AccessTokenResponse {
-    Success(Json<AccessTokenSuccessResponse>),
-    Error(String, Status),
+    id_token: Option<String>,
 }
 
 #[derive(Serialize, Clone, Debug)]
