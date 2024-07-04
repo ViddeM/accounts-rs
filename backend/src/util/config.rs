@@ -1,7 +1,10 @@
 use aes_gcm::{Aes256Gcm, Key, KeyInit};
 use argon2::{Algorithm, Argon2, Params, Version};
+use openssl::pkey::Private;
+use openssl::rsa::Rsa;
 use serde::{Deserialize, Serialize};
 use std::env::VarError;
+use std::path::Path;
 use std::sync::Arc;
 use std::{env, fs, io};
 
@@ -19,6 +22,8 @@ pub enum ConfigError {
     InvalidBool(String),
     #[error("Invalid email provider `{0}`. Valid options are: none, stdout, google")]
     InvalidEmailProvider(String),
+    #[error("Failed to parse signing key")]
+    OpensslError(#[from] openssl::error::ErrorStack),
 }
 
 pub type ConfigResult<T> = Result<T, ConfigError>;
@@ -39,6 +44,7 @@ pub struct Config {
     pub backend_address: String,
     pub redis_url: String,
     pub log_db_statements: bool,
+    pub jwt_signing_key: Rsa<Private>,
 }
 
 #[derive(Clone)]
@@ -99,6 +105,11 @@ impl Config {
             _ => return Err(ConfigError::InvalidEmailProvider(email_provider)),
         };
 
+        // JWT signing
+        let key_path = load_env_str("JWT_SIGNING_KEY_PATH")?;
+        let file_contents = fs::read(Path::new(&key_path))?;
+        let jwt_signing_key: Rsa<Private> = Rsa::private_key_from_pem(file_contents.as_slice())?;
+
         Ok(Config {
             database_url: load_env_str("DATABASE_URL")?,
             pepper_cipher,
@@ -107,6 +118,7 @@ impl Config {
             backend_address: load_env_str("BACKEND_ADDRESS")?,
             redis_url: load_env_str("REDIS_URL")?,
             log_db_statements: load_env_bool("LOG_DB_STATEMENTS")?,
+            jwt_signing_key: jwt_signing_key,
         })
     }
 }

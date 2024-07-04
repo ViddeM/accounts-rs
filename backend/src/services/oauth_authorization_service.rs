@@ -64,6 +64,7 @@ struct AuthToken {
     code: String,
     client_id: String,
     account_id: Uuid,
+    scopes: HashSet<OauthScope>,
 }
 
 pub async fn get_auth_token(
@@ -135,6 +136,7 @@ pub async fn get_auth_token(
         code: code.clone(),
         client_id,
         account_id,
+        scopes: requested_scopes.clone(),
     };
 
     let key = format!("{}:{}", AUTHORIZATION_KEY_REDIS_PREFIX, code);
@@ -160,6 +162,23 @@ pub struct AccessToken {
     pub expiration: DateTime<Utc>,
     pub client_id: String,
     pub account_id: Uuid,
+    pub issued_at: DateTime<Utc>,
+    pub scopes: HashSet<OauthScope>,
+}
+
+impl AccessToken {
+    pub fn expires_in(&self) -> u32 {
+        let now = Utc::now();
+        let expires_in = self.expiration.timestamp() - now.timestamp(); // The number of seconds until expiration
+        if expires_in <= 0 {
+            log::warn!("Expires in is {expires_in} before being returned to the caller!");
+        }
+        expires_in as u32
+    }
+
+    pub fn has_scope(&self, oauth_scope: &OauthScope) -> bool {
+        self.scopes.contains(oauth_scope)
+    }
 }
 
 pub async fn get_access_token(
@@ -213,6 +232,7 @@ pub async fn get_access_token(
         redis_pool,
         code_auth_token.client_id,
         code_auth_token.account_id,
+        code_auth_token.scopes,
     )
     .await?;
 
@@ -225,14 +245,16 @@ pub async fn get_access_token_basic_auth(
     redis_pool: &mobc::Pool<RedisConnectionManager>,
     service: String,
     account_id: Uuid,
+    scopes: HashSet<OauthScope>,
 ) -> Result<AccessToken, Oauth2Error> {
-    generate_access_token(redis_pool, service, account_id).await
+    generate_access_token(redis_pool, service, account_id, scopes).await
 }
 
 async fn generate_access_token(
     redis_pool: &mobc::Pool<RedisConnectionManager>,
     client_id: String,
     account_id: Uuid,
+    scopes: HashSet<OauthScope>,
 ) -> Result<AccessToken, Oauth2Error> {
     let access_token: String = thread_rng()
         .sample_iter(&Alphanumeric)
@@ -241,7 +263,9 @@ async fn generate_access_token(
         .collect();
 
     let time_until_expiration = Duration::seconds(ACCESS_TOKEN_EXPIRATION_SECONDS);
-    let expiration_time: DateTime<Utc> = Utc::now()
+
+    let issuing_time: DateTime<Utc> = Utc::now();
+    let expiration_time: DateTime<Utc> = issuing_time
         .checked_add_signed(time_until_expiration)
         .ok_or(Oauth2Error::ExpirationTimeGeneration)?;
 
@@ -250,6 +274,8 @@ async fn generate_access_token(
         expiration: expiration_time,
         client_id,
         account_id,
+        issued_at: issuing_time,
+        scopes: scopes,
     };
 
     let key = format!(

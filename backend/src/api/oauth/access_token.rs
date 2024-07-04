@@ -1,20 +1,27 @@
 use std::str::from_utf8;
 
 use base64::{engine::general_purpose::STANDARD, Engine};
-use chrono::Utc;
+use chrono::{DateTime, Utc};
+use jwt::{PKeyWithDigest, SignWithKey};
 use mobc_redis::RedisConnectionManager;
+use openssl::{
+    hash::MessageDigest,
+    pkey::{PKey, Private},
+    rsa::Rsa,
+};
 use rocket::{
     form::Form,
-    http::Status,
+    http::{Header, Status},
     request::{self, FromRequest},
     serde::json::Json,
-    Request, Response, State,
+    Request, State,
 };
 use serde::Serialize;
 use sqlx::Pool;
 
 use crate::{
     db::DB,
+    models::{id_token::IdToken, oauth_scope::OauthScope},
     services::{
         login_service,
         oauth_authorization_service::{self, AccessToken, Oauth2Error},
@@ -41,10 +48,52 @@ pub struct AccessTokenRequest {
     client_secret: String,
 }
 
+#[derive(Debug, Clone)]
+enum CacheControlVariant {
+    NoStore,
+}
+
+#[derive(Debug, Clone)]
+struct CacheControl(CacheControlVariant);
+
+impl From<CacheControl> for Header<'static> {
+    fn from(value: CacheControl) -> Self {
+        Self {
+            name: HEADER_CACHE_CONTROL.into(),
+            value: match value.0 {
+                CacheControlVariant::NoStore => NO_STORE.into(),
+            },
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+enum PragmaVariant {
+    NoCache,
+}
+
+#[derive(Debug, Clone)]
+struct Pragma(PragmaVariant);
+
+impl From<Pragma> for Header<'static> {
+    fn from(value: Pragma) -> Self {
+        Self {
+            name: HEADER_PRAGMA.into(),
+            value: match value.0 {
+                PragmaVariant::NoCache => NO_CACHE.into(),
+            },
+        }
+    }
+}
+
 #[derive(Responder, Debug, Clone)]
 pub enum AccessTokenResponse {
     #[response(status = 200)]
-    Success(Json<AccessTokenResponseData>),
+    Success {
+        inner: Json<AccessTokenResponseData>,
+        cache_control: CacheControl,
+        pragma: Pragma,
+    },
     #[response(status = 400)]
     Error(Json<AccessTokenErrorResponse>),
     #[response(status = 500)]
@@ -61,7 +110,17 @@ pub struct AccessTokenResponseData {
 
 #[derive(Serialize, Clone, Debug)]
 pub struct AccessTokenErrorResponse {
-    message: String,
+    error: AccessTokenError,
+}
+
+#[derive(Serialize, Clone, Debug)]
+#[serde(rename_all = "snake_case")]
+pub enum AccessTokenError {
+    InvalidRequest,
+    InvalidClient,
+    InvalidGrant,
+    UnsupportedGrantType,
+    InvalidScope,
 }
 
 // Second step in the oauth2 authorization flow.
@@ -69,13 +128,14 @@ pub struct AccessTokenErrorResponse {
 pub async fn post_access_token(
     db_pool: &State<Pool<DB>>,
     redis_pool: &State<mobc::Pool<RedisConnectionManager>>,
+    config: &State<Config>,
     request: Form<AccessTokenRequest>,
 ) -> AccessTokenResponse {
     if request.grant_type != GRANT_TYPE_AUTHORIZATION_CODE {
-        return AccessTokenResponse::Error(
-            String::from("Invalid grant type"),
-            Status::UnprocessableEntity,
-        );
+        log::warn!("Unsupported grant type {}", request.grant_type);
+        return AccessTokenResponse::Error(Json(AccessTokenErrorResponse {
+            error: AccessTokenError::UnsupportedGrantType,
+        }));
     }
 
     let access_token = match oauth_authorization_service::get_access_token(
@@ -90,74 +150,98 @@ pub async fn post_access_token(
     {
         Ok(access_token) => access_token,
         Err(Oauth2Error::NoClientWithId) => {
-            return AccessTokenResponse::Error(
-                String::from("Invalid client ID"),
-                Status::BadRequest,
-            );
+            log::warn!("Received invalid client ID: {}", request.client_id);
+            return AccessTokenResponse::Error(Json(AccessTokenErrorResponse {
+                error: AccessTokenError::InvalidClient,
+            }));
         }
         Err(Oauth2Error::InvalidRedirectUri) => {
-            return AccessTokenResponse::Error(
-                String::from("Invalid redirect URI"),
-                Status::BadRequest,
-            );
+            log::warn!("Received invalid client ID: {}", request.client_id);
+            return AccessTokenResponse::Error(Json(AccessTokenErrorResponse {
+                error: AccessTokenError::InvalidRequest,
+            }));
         }
         Err(Oauth2Error::InvalidClientSecret) => {
-            return AccessTokenResponse::Error(
-                String::from("Invalid client secret"),
-                Status::BadRequest,
-            );
+            log::warn!("Received invalid client secret");
+            return AccessTokenResponse::Error(Json(AccessTokenErrorResponse {
+                error: AccessTokenError::InvalidRequest,
+            }));
         }
         Err(Oauth2Error::InvalidCode) => {
-            return AccessTokenResponse::Error(String::from("Invalid code"), Status::BadRequest);
+            log::warn!("Received an invalid auth code: {}", request.code);
+            return AccessTokenResponse::Error(Json(AccessTokenErrorResponse {
+                error: AccessTokenError::InvalidGrant,
+            }));
         }
         Err(err) => {
             error!("Failed to get access token, err: {}", err);
-            return AccessTokenResponse::Error(
-                String::from("An internal server error occurred"),
-                Status::BadRequest,
-            );
+            return AccessTokenResponse::InternalError("Internal error".into());
         }
     };
 
-    let access_token_response = access_token.into();
-    AccessTokenResponse::Success(Json(access_token_response))
-}
-
-impl<'r> Responder<'r, 'static> for AccessTokenResponse {
-    fn respond_to(self, request: &'r rocket::Request<'_>) -> rocket::response::Result<'static> {
-        match self {
-            AccessTokenResponse::Success(content) => {
-                let mut response = Response::build_from(content.respond_to(request)?);
-                response.status(Status::Ok);
-                response.raw_header(HEADER_CACHE_CONTROL, NO_STORE);
-                response.raw_header(HEADER_PRAGMA, NO_CACHE);
-                response.ok()
-            }
-            AccessTokenResponse::Error(msg, status) => {
-                let err_response = Json(AccessTokenErrorResponse { message: msg });
-                let mut response = Response::build_from(err_response.respond_to(request)?);
-                response.status(status);
-                response.ok()
+    let id_token = if access_token.has_scope(&OauthScope::OpenId) {
+        match get_id_token(&config, &access_token) {
+            Ok(t) => Some(t),
+            Err(err) => {
+                log::error!("Failed to create or sign ID token JWT, err: {err}");
+                return AccessTokenResponse::InternalError("Internal error".into());
             }
         }
+    } else {
+        None
+    };
+
+    let access_token_response = AccessTokenResponseData {
+        access_token: access_token.access_token.clone(),
+        expires_in: access_token.expires_in(),
+        token_type: TOKEN_TYPE_BEARER.into(),
+        id_token,
+    };
+
+    AccessTokenResponse::Success {
+        inner: Json(access_token_response),
+        cache_control: CacheControl(CacheControlVariant::NoStore),
+        pragma: Pragma(PragmaVariant::NoCache),
     }
 }
 
-impl From<AccessToken> for AccessTokenSuccessResponse {
-    fn from(value: AccessToken) -> Self {
-        let now = Utc::now();
-        let expires_in = value.expiration.timestamp() - now.timestamp(); // The number of seconds until expiration
-        if expires_in <= 0 {
-            warn!("Expires in is {expires_in} before being returned to the caller!");
-        }
-        let expires_in = expires_in as u32;
-
-        AccessTokenSuccessResponse {
-            access_token: value.access_token,
-            expires_in,
-            token_type: TOKEN_TYPE_BEARER.to_string(),
-        }
+fn calculate_expire_time(expiration: DateTime<Utc>) -> u32 {
+    let now = Utc::now();
+    let expires_in = expiration.timestamp() - now.timestamp(); // The number of seconds until expiration
+    if expires_in <= 0 {
+        log::warn!("Expires in is {expires_in} before being returned to the caller!");
     }
+    expires_in as u32
+}
+
+fn get_id_token(config: &Config, access_token: &AccessToken) -> Result<String, String> {
+    let id_token = IdToken {
+        issuer: config.backend_address.clone(),
+        subject: access_token.account_id.into(),
+        audience: access_token.client_id.clone(),
+        expires_at: access_token.expiration.timestamp(),
+        issued_at: access_token.issued_at.timestamp(),
+    };
+
+    let jwt_header = jwt::Header {
+        algorithm: jwt::AlgorithmType::Rs256,
+        key_id: None,
+        type_: Some(jwt::header::HeaderType::JsonWebToken),
+        content_type: None,
+    };
+
+    let signing_key: Rsa<Private> = config.jwt_signing_key.clone();
+    let key = PKeyWithDigest {
+        digest: MessageDigest::sha256(),
+        key: PKey::from_rsa(signing_key)
+            .map_err(|err| format!("Failed to create signing key from rsa key, err: {err:?}"))?,
+    };
+
+    let signed_token = jwt::Token::new(jwt_header, id_token)
+        .sign_with_key(&key)
+        .map_err(|err| format!("Failed to sign jwt token, err: {err:?}"))?;
+
+    Ok(signed_token.into())
 }
 
 pub struct AuthHeader {

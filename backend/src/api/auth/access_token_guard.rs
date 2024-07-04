@@ -2,10 +2,14 @@ use mobc_redis::RedisConnectionManager;
 use rocket::{
     http::Status,
     request::{FromRequest, Outcome},
+    serde::json::Json,
     State,
 };
 
-use crate::services::oauth_authorization_service::{AccessToken, ACCESS_TOKEN_KEY_REDIS_PREFIX};
+use crate::{
+    api::oauth::access_token::AccessTokenError,
+    services::oauth_authorization_service::{AccessToken, ACCESS_TOKEN_KEY_REDIS_PREFIX},
+};
 use crate::{api::oauth::access_token::TOKEN_TYPE_BEARER, services::redis_service};
 
 #[derive(Debug)]
@@ -13,21 +17,19 @@ pub struct AccessTokenAuth {
     pub access_token: AccessToken,
 }
 
-#[derive(Debug, thiserror::Error)]
-pub enum AccessTokenError {
-    #[error("Missing authorization header")]
-    MissingAuthHeader,
-    #[error("Invalid authorization header")]
-    InvalidAuthHeader,
-    #[error("Redis error")]
-    RedisError,
+#[derive(Debug, Clone, Responder)]
+pub enum AccessTokenAuthError {
+    #[response(status = 400)]
+    AuthError(Json<AccessTokenError>),
+    #[response(status = 500)]
+    InternalError(String),
 }
 
 const AUTH_HEADER_NAME: &str = "Authorization";
 
 #[rocket::async_trait]
 impl<'r> FromRequest<'r> for AccessTokenAuth {
-    type Error = AccessTokenError;
+    type Error = AccessTokenAuthError;
 
     async fn from_request(request: &'r rocket::Request<'_>) -> Outcome<Self, Self::Error> {
         let redis_pool = match request
@@ -38,7 +40,10 @@ impl<'r> FromRequest<'r> for AccessTokenAuth {
             Some(pool) => pool,
             None => {
                 error!("Failed to retrieve redis pool");
-                return Outcome::Error((Status::InternalServerError, AccessTokenError::RedisError));
+                return Outcome::Error((
+                    Status::InternalServerError,
+                    AccessTokenAuthError::InternalError("Internal error".to_string()),
+                ));
             }
         };
 
@@ -47,7 +52,10 @@ impl<'r> FromRequest<'r> for AccessTokenAuth {
             Some(s) => s.to_string(),
             None => {
                 error!("Auth failed, missing bearer token header");
-                return Outcome::Error((Status::Unauthorized, AccessTokenError::MissingAuthHeader));
+                return Outcome::Error((
+                    Status::BadRequest,
+                    AccessTokenAuthError::AuthError(Json(AccessTokenError::InvalidRequest)),
+                ));
             }
         };
 
@@ -55,7 +63,10 @@ impl<'r> FromRequest<'r> for AccessTokenAuth {
             Some(t) => t,
             None => {
                 error!("Invalid bearer token '{bearer_token}'");
-                return Outcome::Error((Status::Unauthorized, AccessTokenError::InvalidAuthHeader));
+                return Outcome::Error((
+                    Status::BadRequest,
+                    AccessTokenAuthError::AuthError(Json(AccessTokenError::InvalidRequest)),
+                ));
             }
         };
 
@@ -66,15 +77,15 @@ impl<'r> FromRequest<'r> for AccessTokenAuth {
                 Ok(None) => {
                     println!("Invalid auth token {access_token}");
                     return Outcome::Error((
-                        Status::Unauthorized,
-                        AccessTokenError::InvalidAuthHeader,
+                        Status::BadRequest,
+                        AccessTokenAuthError::AuthError(Json(AccessTokenError::InvalidRequest)),
                     ));
                 }
                 Err(e) => {
                     error!("Failed to get access token from redis, err: {e}");
                     return Outcome::Error((
                         Status::InternalServerError,
-                        AccessTokenError::RedisError,
+                        AccessTokenAuthError::InternalError("Internal error".to_string()),
                     ));
                 }
             };
